@@ -28,6 +28,8 @@ import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import Image from "next/image";
+import { PaymentDialog } from "@/components/pos/payment-dialog";
+import { ReceiptPrinter } from "@/components/shared/receipt-printer";
 
 interface Product {
   id: string;
@@ -223,7 +225,17 @@ export function POSTerminal() {
   const [search, setSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPayment, setShowPayment] = useState(false);
+  const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [receipt, setReceipt] = useState<{
+    orderId: string;
+    orderNumber: number;
+    paymentMethod: string;
+    snapshotItems: { name: string; quantity: number; unitPrice: number; lineTotal: number }[];
+    snapshotSubtotal: number;
+    snapshotTax: number;
+    snapshotGrandTotal: number;
+  } | null>(null);
   const [tables, setTables] = useState<Table[]>([]);
   const [floors, setFloors] = useState<Floor[]>([]);
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
@@ -232,6 +244,9 @@ export function POSTerminal() {
 
   const { items, addItem, removeItem, updateQuantity, clearCart, subtotal, taxTotal, grandTotal, totalItems } = useCartStore();
   const { socket, isConnected } = useSocket();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     Promise.all([
@@ -316,9 +331,12 @@ export function POSTerminal() {
       const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "CASHIER", tableId: selectedTableId || undefined }),
+        body: JSON.stringify({ source: "CASHIER", ...(selectedTableId ? { tableId: selectedTableId } : {}) }),
       });
       const orderData = await orderRes.json();
+      if (!orderData.ok) {
+        throw new Error(orderData.error || "Failed to create order");
+      }
       const orderId = orderData.data.id;
 
       // Add items
@@ -966,7 +984,7 @@ export function POSTerminal() {
           <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>
             Current Order
           </h3>
-          {totalItems() > 0 && (
+          {mounted && totalItems() > 0 && (
             <span
               style={{
                 marginLeft: "auto",
@@ -1140,10 +1158,11 @@ export function POSTerminal() {
 
             {/* Actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              {/* Checkout (pay-first for counter customers) */}
               <button
-                id="send-to-kitchen-btn"
-                onClick={handleSendToKitchen}
-                disabled={isSubmitting}
+                id="checkout-pay-btn"
+                onClick={() => setShowCheckout(true)}
+                disabled={items.length === 0}
                 style={{
                   background: "linear-gradient(135deg, #c87941, #a06030)",
                   color: "#fff",
@@ -1152,13 +1171,44 @@ export function POSTerminal() {
                   fontWeight: "700",
                   fontSize: "15px",
                   boxShadow: "0 4px 16px rgba(200, 121, 65, 0.3)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  border: "none",
+                  borderRadius: "10px",
                   cursor: "pointer",
                   width: "100%",
                 }}
               >
-                <Send size={16} />
-                {isSubmitting ? "Sending..." : "Send to Kitchen"}
+                <CreditCard size={16} />
+                Checkout &amp; Pay
               </button>
+
+              {/* Send to kitchen (table service — pay later) */}
+              <button
+                id="send-to-kitchen-btn"
+                onClick={handleSendToKitchen}
+                disabled={isSubmitting}
+                style={{
+                  background: "transparent",
+                  color: "var(--color-primary)",
+                  padding: "11px",
+                  justifyContent: "center",
+                  fontWeight: "600",
+                  fontSize: "14px",
+                  border: "1px solid rgba(200,121,65,0.4)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  borderRadius: "10px",
+                  cursor: "pointer",
+                  width: "100%",
+                }}
+              >
+                <Send size={15} />
+                {isSubmitting ? "Sending..." : "Send to Kitchen (Pay Later)"}
+              </button>
+
               <button
                 id="clear-cart-btn"
                 onClick={() => {
@@ -1173,6 +1223,7 @@ export function POSTerminal() {
                   justifyContent: "center",
                   fontSize: "13px",
                   border: "1px solid var(--color-border-muted)",
+                  borderRadius: "10px",
                   cursor: "pointer",
                   width: "100%",
                 }}
@@ -1183,7 +1234,65 @@ export function POSTerminal() {
           </div>
         )}
 
+
       </div>
+
+      {/* ── Checkout Payment Dialog ── */}
+      {showCheckout && (
+        <PaymentDialog
+          grandTotal={grandTotal()}
+          subtotal={subtotal()}
+          taxTotal={taxTotal()}
+          items={items}
+          onSuccess={async (orderId, method) => {
+            // Capture snapshot BEFORE clearing cart
+            const snap = {
+              items: items.map((i) => ({
+                name: i.name,
+                quantity: i.quantity,
+                unitPrice: i.price,
+                lineTotal: i.price * i.quantity,
+              })),
+              subtotal: subtotal(),
+              tax: taxTotal(),
+              grand: grandTotal(),
+            };
+            setShowCheckout(false);
+            const res = await fetch(`/api/orders/${orderId}`);
+            const data = await res.json();
+            if (data.ok) {
+              setReceipt({
+                orderId,
+                orderNumber: data.data.orderNumber,
+                paymentMethod: method,
+                snapshotItems: snap.items,
+                snapshotSubtotal: snap.subtotal,
+                snapshotTax: snap.tax,
+                snapshotGrandTotal: snap.grand,
+              });
+            }
+            clearCart();
+          }}
+          onClose={() => setShowCheckout(false)}
+        />
+      )}
+
+      {/* ── Receipt Printer ── */}
+      {receipt && (
+        <ReceiptPrinter
+          orderNumber={receipt.orderNumber}
+          items={receipt.snapshotItems}
+          subtotal={receipt.snapshotSubtotal}
+          taxTotal={receipt.snapshotTax}
+          discountTotal={0}
+          grandTotal={receipt.snapshotGrandTotal}
+          paymentMethod={receipt.paymentMethod}
+          paidAt={new Date()}
+          onClose={() => {
+            setReceipt(null);
+          }}
+        />
+      )}
     </div>
   );
 }
