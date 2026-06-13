@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
 import { processPaymentSchema } from "@/lib/validations/payment";
-import { sendReceiptEmail } from "@/lib/email";
+import { emailQueue } from "@/lib/queue/email-queue";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { rateLimitPayment } from "@/lib/cache/rate-limit";
 
@@ -149,11 +149,11 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
   }
 
-  // Send email receipt
+  // Send email receipt via background queue
   const emailTo = order.customer?.email;
   if (emailTo) {
     try {
-      await sendReceiptEmail({
+      await emailQueue.add("send-receipt", {
         to: emailTo,
         customerName: order.customer?.name || "Customer",
         orderNumber: order.orderNumber,
@@ -169,11 +169,11 @@ export async function POST(request: Request, { params }: RouteParams) {
         discountTotal: Number(order.discountTotal),
         grandTotal: Number(order.grandTotal),
         paymentMethod: paymentMethod.name,
-        paidAt: new Date(),
+        paidAt: new Date().toISOString(), // Serializable date
       });
     } catch (emailErr) {
-      console.error("[Payment] Email receipt failed:", emailErr);
-      // Don't fail the payment if email fails
+      console.error("[Payment] Email queue failed:", emailErr);
+      // Don't fail the payment if queue submission fails
     }
   }
 

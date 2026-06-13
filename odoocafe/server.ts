@@ -8,6 +8,7 @@ import { Server as SocketIOServer } from "socket.io";
 import { createAdapter } from "@socket.io/redis-adapter";
 import { Redis } from "ioredis";
 import { SOCKET_EVENTS } from "./lib/socket-events";
+import { startEmailWorker } from "./lib/queue/email-worker";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
@@ -63,6 +64,14 @@ app.prepare().then(() => {
   }).catch((err) => {
     console.warn("[Socket.IO] Redis adapter failed, using in-memory:", err.message);
   });
+
+  // ---- BullMQ Setup ----
+  try {
+    startEmailWorker();
+    console.log("[BullMQ] Email worker started");
+  } catch (err) {
+    console.error("[BullMQ] Failed to start email worker:", err);
+  }
 
   // ---- Socket.IO Connection Handler ----
   io.on("connection", (socket) => {
