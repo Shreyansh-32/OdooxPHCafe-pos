@@ -69,7 +69,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     // Check if ALL items in the order are COMPLETED
     const allCompleted = item.order.items.every(
-      (i) => i.kdsStatus === "COMPLETED" || i.id === item.id && kdsStatus === "COMPLETED"
+      (i: { kdsStatus: string }) => i.kdsStatus === "COMPLETED"
     );
 
     if (allCompleted && kdsStatus === "COMPLETED") {
