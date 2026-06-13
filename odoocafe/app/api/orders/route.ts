@@ -23,6 +23,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status");
   const tableId = searchParams.get("tableId");
+  const history = searchParams.get("history") === "true";
   const limit = parseInt(searchParams.get("limit") || "50", 10);
 
   // Customers can only see their own orders
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
     const orders = await prisma.order.findMany({
       where: {
         customerId: customerSession.customerId,
-        tableId: customerSession.tableId,
+        ...(history ? {} : { tableId: tableId || customerSession.tableId }),
         ...(status ? { status: status as "DRAFT" | "SENT" | "PAID" | "CANCELLED" } : {}),
       },
       include: {
