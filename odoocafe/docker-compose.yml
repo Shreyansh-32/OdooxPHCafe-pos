@@ -1,0 +1,69 @@
+version: '3.9'
+
+# ================================================================
+# CafePOS — Local Development Services
+# ================================================================
+# Start all services:  docker compose up -d
+# Stop all services:   docker compose down
+# View logs:           docker compose logs -f
+# Reset everything:    docker compose down -v  (WARNING: deletes all data)
+# ================================================================
+
+services:
+
+  # ── PostgreSQL 16 ──────────────────────────────────────────────
+  # The primary relational database for CafePOS.
+  # All persistent data lives here: orders, users, products, tables.
+  # Accessible at: localhost:5432
+  postgres:
+    image: postgres:16-alpine
+    container_name: cafepos-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+      POSTGRES_DB: cafepos
+    ports:
+      - "5432:5432"
+    volumes:
+      # Named volume = data persists across container restarts
+      - cafepos_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d cafepos"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ── Redis 7 ────────────────────────────────────────────────────
+  # In-memory store used for:
+  #   - Socket.IO pub/sub adapter (real-time event sync)
+  #   - Table edit locks (concurrency control)
+  #   - NextAuth session storage
+  #   - API rate limiting
+  # Accessible at: localhost:6379
+  redis:
+    image: redis:7-alpine
+    container_name: cafepos-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    # appendonly yes = data survives container restarts
+    command: redis-server --appendonly yes
+    volumes:
+      - cafepos_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+# ── Named Volumes ──────────────────────────────────────────────
+# These store data outside the container lifecycle.
+# Your database data survives even if you restart or recreate containers.
+volumes:
+  cafepos_pgdata:
+    driver: local
+  cafepos_redisdata:
+    driver: local
