@@ -6,6 +6,8 @@ import { formatCurrency } from "@/lib/utils";
 import { Search, ShoppingCart, Plus, Minus, Trash2, Send, CreditCard, Wifi, WifiOff } from "lucide-react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
+import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface Product {
   id: string;
@@ -30,7 +32,6 @@ export function POSTerminal() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string; type: string }[]>([]);
   const [tables, setTables] = useState<{ id: string; tableNumber: string }[]>([]);
@@ -113,11 +114,12 @@ export function POSTerminal() {
         body: JSON.stringify({ status: "SENT" }),
       });
 
-      setActiveOrderId(orderId);
       clearCart();
       setSelectedTableId("");
+      toast.success("Order sent to kitchen!");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to send order");
     }
 
     setIsSubmitting(false);
@@ -153,9 +155,12 @@ export function POSTerminal() {
             gap: "12px",
           }}
         >
-          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
-            ☕ Menu
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={28} height={28} style={{ objectFit: "contain" }} />
+            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
+              Menu
+            </h2>
+          </div>
           <div
             style={{
               display: "flex",
@@ -585,27 +590,6 @@ export function POSTerminal() {
           </div>
         )}
 
-        {/* Success message */}
-        {activeOrderId && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "24px",
-              right: "24px",
-              background: "rgba(34, 197, 94, 0.15)",
-              border: "1px solid rgba(34, 197, 94, 0.3)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              color: "#4ade80",
-              fontSize: "14px",
-              fontWeight: "600",
-              animation: "fadeIn 0.3s ease",
-              zIndex: 100,
-            }}
-          >
-            ✓ Order sent to kitchen!
-          </div>
-        )}
       </div>
     </div>
   );
