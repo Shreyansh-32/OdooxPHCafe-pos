@@ -4,30 +4,35 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
 }
 
 // ==============================
-// ENUMS (Strict State Management)
+// ENUMS
 // ==============================
 
 enum Role {
-  ADMIN       // Full access
-  CASHIER     // POS access
-  KITCHEN     // KDS access only
+  ADMIN
+  CASHIER
+  KITCHEN
 }
 
 enum OrderStatus {
-  DRAFT       // Open order in POS
-  PAID        // Successfully checked out
-  CANCELLED   // Voided order
+  DRAFT      // Active, being built
+  SENT       // Confirmed and sent to kitchen
+  PAID       // Payment completed
+  CANCELLED  // Voided
+}
+
+enum OrderSource {
+  CASHIER    // Created by staff at POS
+  CUSTOMER   // Created via QR table scan
 }
 
 enum KdsStatus {
-  PENDING     // Not sent to kitchen yet
-  TO_COOK     // In KDS: Waiting to start
-  PREPARING   // In KDS: Currently cooking
-  COMPLETED   // In KDS: Ready to serve
+  PENDING    // Just received
+  TO_COOK    // Acknowledged by kitchen
+  PREPARING  // Currently being made
+  COMPLETED  // Ready to serve
 }
 
 enum PaymentType {
@@ -42,198 +47,279 @@ enum DiscountType {
 }
 
 // ==============================
-// MODELS
+// STAFF & ADMIN
 // ==============================
 
 model User {
-  id            String    @id @default(cuid())
-  name          String
-  email         String    @unique
-  password      String    // Hashed
-  role          Role      @default(CASHIER)
-  isArchived    Boolean   @default(false) // Soft delete
-  
-  // Relations
-  sessions      Session[]
-  ordersTaken   Order[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String    // bcrypt hash
+  role        Role      @default(CASHIER)
+  isArchived  Boolean   @default(false)
+
+  sessions    Session[]
+  ordersTaken Order[]
+  auditLogs   AuditLog[]
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
+
+// ==============================
+// CUSTOMER
+// ==============================
 
 model Customer {
-  id            String    @id @default(cuid())
-  name          String
-  email         String?   @unique
-  phone         String?   @unique
-  
-  // Relations
-  orders        Order[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  password     String    // bcrypt hash
+  phone        String?
+  isVerified   Boolean   @default(false)
+  lastOrderAt  DateTime?
+
+  orders       Order[]
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 }
 
-model Category {
-  id            String    @id @default(cuid())
-  name          String    @unique
-  color         String    @default("#E5E7EB")
-  
-  // Relations
-  products      Product[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
-
-model Product {
-  id            String    @id @default(cuid())
-  name          String
-  description   String?
-  price         Decimal   @db.Decimal(10, 2)
-  uom           String    // Unit of measure (e.g., piece, kg)
-  taxRate       Decimal   @default(0.00) @db.Decimal(5, 2)
-  showInKds     Boolean   @default(true) // Filter for Kitchen Display
-  isArchived    Boolean   @default(false)
-  
-  categoryId    String
-  category      Category  @relation(fields: [categoryId], references: [id])
-  
-  orderItems    OrderItem[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-}
+// ==============================
+// VENUE
+// ==============================
 
 model Floor {
-  id            String    @id @default(cuid())
-  name          String
-  
-  tables        Table[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id        String   @id @default(cuid())
+  name      String
+  sortOrder Int      @default(0)
+
+  tables    Table[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Table {
-  id            String    @id @default(cuid())
-  tableNumber   String
-  seats         Int
-  isActive      Boolean   @default(true)
-  
-  floorId       String
-  floor         Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
-  
-  orders        Order[]
-  
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  tableNumber    String
+  seats          Int
+  isActive       Boolean   @default(true)
+  qrToken        String?   @unique  // Signed JWT for QR URL
+  qrGeneratedAt  DateTime?
+
+  floorId        String
+  floor          Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
+
+  orders         Order[]
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@unique([floorId, tableNumber])
 }
 
-model Session {
-  id            String    @id @default(cuid())
-  openedAt      DateTime  @default(now())
-  closedAt      DateTime?
-  closingAmount Decimal?  @db.Decimal(10, 2)
-  
-  userId        String    // Cashier who opened it
-  user          User      @relation(fields: [userId], references: [id])
-  
-  orders        Order[]
+// ==============================
+// MENU
+// ==============================
+
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  color     String    @default("#E5E7EB")
+  sortOrder Int       @default(0)
+  isVisible Boolean   @default(true)
+
+  products  Product[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
+model Product {
+  id          String     @id @default(cuid())
+  name        String
+  description String?
+  price       Decimal    @db.Decimal(10, 2)
+  imageUrl    String?
+  uom         String     @default("piece") // Unit of measure
+  taxRate     Decimal    @default(0.00) @db.Decimal(5, 2)
+  isAvailable Boolean    @default(true)   // Toggle out-of-stock
+  showInKds   Boolean    @default(true)   // false = skip KDS (e.g. bottled water)
+  isArchived  Boolean    @default(false)
+
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id])
+
+  orderItems  OrderItem[]
+
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([categoryId, isArchived])
+  @@index([name])
+}
+
+// ==============================
+// POS SESSION
+// ==============================
+
+model Session {
+  id             String    @id @default(cuid())
+  openedAt       DateTime  @default(now())
+  closedAt       DateTime?
+  openingAmount  Decimal   @db.Decimal(10, 2) @default(0.00) // Opening cash in drawer
+  closingAmount  Decimal?  @db.Decimal(10, 2)                // Counted at close
+
+  userId         String
+  user           User      @relation(fields: [userId], references: [id])
+
+  orders         Order[]
+}
+
+// ==============================
+// PAYMENTS
+// ==============================
+
 model PaymentMethod {
-  id            String      @id @default(cuid())
-  name          String
-  type          PaymentType
-  isEnabled     Boolean     @default(true)
-  upiId         String?     // Nullable, only for UPI type
-  
-  payments      Payment[]
-  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id        String      @id @default(cuid())
+  name      String
+  type      PaymentType
+  isEnabled Boolean     @default(true)
+  upiId     String?     // Café's UPI VPA for QR display
+
+  payments  Payment[]
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 }
 
 model Promotion {
-  id              String        @id @default(cuid())
-  name            String
-  code            String?       @unique // Nullable if automated
-  discountType    DiscountType
-  discountValue   Decimal       @db.Decimal(10, 2)
-  
-  // Triggers
-  minQuantity     Int?          // For Product-level promo
-  minOrderAmount  Decimal?      @db.Decimal(10, 2) // For Order-level promo
-  isActive        Boolean       @default(true)
-  
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String       @id @default(cuid())
+  name           String
+  code           String?      @unique
+  discountType   DiscountType
+  discountValue  Decimal      @db.Decimal(10, 2)
+  minOrderAmount Decimal?     @db.Decimal(10, 2)
+  maxUses        Int?
+  usedCount      Int          @default(0)
+  validFrom      DateTime?
+  validUntil     DateTime?
+  isActive       Boolean      @default(true)
+
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
+
+// ==============================
+// ORDERS
+// ==============================
 
 model Order {
   id            String      @id @default(cuid())
   orderNumber   Int         @unique @default(autoincrement())
   status        OrderStatus @default(DRAFT)
-  
+  source        OrderSource @default(CASHIER)
+  customerNote  String?
+
   subtotal      Decimal     @db.Decimal(10, 2)
   taxTotal      Decimal     @db.Decimal(10, 2)
   discountTotal Decimal     @default(0.00) @db.Decimal(10, 2)
   grandTotal    Decimal     @db.Decimal(10, 2)
-  
-  // Relations
-  sessionId     String
-  session       Session     @relation(fields: [sessionId], references: [id])
-  
-  userId        String      // Cashier
-  user          User        @relation(fields: [userId], references: [id])
-  
+
+  // Null for CUSTOMER-source orders
+  sessionId     String?
+  session       Session?    @relation(fields: [sessionId], references: [id])
+
+  // Null for CUSTOMER-source orders
+  userId        String?
+  user          User?       @relation(fields: [userId], references: [id])
+
   tableId       String?
   table         Table?      @relation(fields: [tableId], references: [id])
-  
+
   customerId    String?
   customer      Customer?   @relation(fields: [customerId], references: [id])
-  
+
+  promotionId   String?
+
   items         OrderItem[]
   payments      Payment[]
-  
+
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
+
+  @@index([status])
+  @@index([tableId, status])
+  @@index([createdAt])
 }
 
 model OrderItem {
-  id            String      @id @default(cuid())
-  quantity      Int
-  unitPrice     Decimal     @db.Decimal(10, 2)
-  lineTotal     Decimal     @db.Decimal(10, 2)
-  notes         String?     // e.g., "No onions"
-  
-  kdsStatus     KdsStatus   @default(PENDING) // Granular kitchen tracking
-  
-  // Relations
-  orderId       String
-  order         Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId     String
-  product       Product     @relation(fields: [productId], references: [id])
-  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id          String    @id @default(cuid())
+  quantity    Int
+  unitPrice   Decimal   @db.Decimal(10, 2) // Snapshot at time of order
+  lineTotal   Decimal   @db.Decimal(10, 2)
+  notes       String?
+
+  kdsStatus   KdsStatus @default(PENDING)
+
+  orderId     String
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id])
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([kdsStatus])
+  @@index([orderId, kdsStatus])
 }
 
 model Payment {
-  id            String        @id @default(cuid())
-  amount        Decimal       @db.Decimal(10, 2)
-  transactionRef String?      // Card auth code or UPI ref
-  
-  // Relations
-  orderId       String
-  order         Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  methodId      String
-  method        PaymentMethod @relation(fields: [methodId], references: [id])
-  
-  createdAt     DateTime      @default(now())
+  id             String        @id @default(cuid())
+  amount         Decimal       @db.Decimal(10, 2)
+  transactionRef String?
+  notes          String?
+
+  orderId        String
+  order          Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  methodId       String
+  method         PaymentMethod @relation(fields: [methodId], references: [id])
+
+  createdAt      DateTime      @default(now())
+}
+
+// ==============================
+// AUDIT & NOTIFICATIONS
+// ==============================
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  action    String   // ORDER_CREATED, PAYMENT_PROCESSED, etc.
+  entity    String   // "Order", "Product", "Table"
+  entityId  String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  meta      Json?    // Before/after snapshot
+
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id         String   @id @default(cuid())
+  type       String   // ORDER_READY, NEW_ORDER, BILL_REQUESTED
+  title      String
+  message    String
+  isRead     Boolean  @default(false)
+  targetRole Role?
+  userId     String?
+  orderId    String?
+  tableId    String?
+
+  createdAt  DateTime @default(now())
+
+  @@index([targetRole, isRead])
+  @@index([userId, isRead])
 }
