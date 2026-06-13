@@ -28,23 +28,26 @@ export async function POST(request: Request) {
 
     const { email, password, tableId } = parsed.data;
 
-    // Verify table exists
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-    });
+    // Verify table exists (only if tableId provided)
+    let table: { id: string; tableNumber: string; isActive: boolean } | null = null;
+    if (tableId) {
+      table = await prisma.table.findUnique({
+        where: { id: tableId },
+      });
 
-    if (!table || !table.isActive) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid table" },
-        { status: 400 }
-      );
+      if (!table || !table.isActive) {
+        return NextResponse.json(
+          { ok: false, error: "Invalid table" },
+          { status: 400 }
+        );
+      }
     }
 
     const customer = await loginCustomer({ email, password });
 
     const token = await signCustomerToken({
       customerId: customer.id,
-      tableId: table.id,
+      tableId: table?.id || "none",
       name: customer.name,
       email: customer.email,
     });
@@ -70,8 +73,8 @@ export async function POST(request: Request) {
         id: customer.id,
         name: customer.name,
         email: customer.email,
-        tableId: table.id,
-        tableNumber: table.tableNumber,
+        tableId: table?.id || null,
+        tableNumber: table?.tableNumber || null,
       },
     });
   } catch (error) {

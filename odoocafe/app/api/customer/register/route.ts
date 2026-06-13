@@ -29,24 +29,27 @@ export async function POST(request: Request) {
 
     const { name, email, password, tableId } = parsed.data;
 
-    // Verify table exists
-    const table = await prisma.table.findUnique({
-      where: { id: tableId },
-      include: { floor: true },
-    });
+    // Verify table exists (only if tableId provided)
+    let table: { id: string; tableNumber: string; isActive: boolean; floor: { name: string } } | null = null;
+    if (tableId) {
+      table = await prisma.table.findUnique({
+        where: { id: tableId },
+        include: { floor: true },
+      });
 
-    if (!table || !table.isActive) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid table" },
-        { status: 400 }
-      );
+      if (!table || !table.isActive) {
+        return NextResponse.json(
+          { ok: false, error: "Invalid table" },
+          { status: 400 }
+        );
+      }
     }
 
-    const customer = await registerCustomer({ name, email, password, tableId });
+    const customer = await registerCustomer({ name, email, password, tableId: tableId || "none" });
 
     const token = await signCustomerToken({
       customerId: customer.id,
-      tableId: table.id,
+      tableId: table?.id || "none",
       name: customer.name,
       email: customer.email,
     });
@@ -66,8 +69,8 @@ export async function POST(request: Request) {
         id: customer.id,
         name: customer.name,
         email: customer.email,
-        tableId: table.id,
-        tableNumber: table.tableNumber,
+        tableId: table?.id || null,
+        tableNumber: table?.tableNumber || null,
       },
     });
   } catch (error) {

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { formatCurrency } from "@/lib/utils";
-import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X, User } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X, User, LogOut } from "lucide-react";
 
 interface Product {
   id: string;
@@ -50,6 +50,7 @@ interface Props {
   tableNumber: string;
   floorName: string;
   customer: CustomerSession;
+  onLogout?: () => void;
 }
 
 const KDS_STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -59,7 +60,7 @@ const KDS_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   COMPLETED: { label: "Ready",      color: "#4ade80" },
 };
 
-export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Props) {
+export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogout }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
@@ -71,6 +72,23 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
   const [orderHistory, setOrderHistory] = useState<any[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const { socket } = useSocket();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/customer/me", { method: "DELETE" });
+      if (onLogout) {
+        onLogout();
+      } else {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -235,7 +253,27 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
         </div>
 
         {/* View toggle */}
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <button
+            id="customer-logout-btn"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: "transparent",
+              border: `1px solid ${styleVars.border}`,
+              color: styleVars.muted,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+            }}
+          >
+            <LogOut size={13} />
+          </button>
           <button
             id="view-profile-btn"
             onClick={loadProfile}
@@ -357,6 +395,30 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
             </div>
             <h2 style={{ margin: "0 0 4px", fontSize: "20px", fontWeight: "800" }}>{customer.name}</h2>
             <p style={{ margin: 0, fontSize: "14px", color: styleVars.muted }}>{customer.email}</p>
+            <button
+              id="profile-logout-btn"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              style={{
+                marginTop: "16px",
+                width: "100%",
+                padding: "10px",
+                borderRadius: "10px",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                color: "#f87171",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <LogOut size={14} /> {loggingOut ? "Logging out..." : "Logout"}
+            </button>
           </div>
 
           <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px" }}>Order History</h3>

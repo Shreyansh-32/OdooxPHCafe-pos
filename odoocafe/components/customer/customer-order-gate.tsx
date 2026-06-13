@@ -70,6 +70,7 @@ export function CustomerOrderGate({ tableId, tableToken, tableNumber, floorName 
       tableNumber={tableNumber}
       floorName={floorName}
       customer={session}
+      onLogout={() => setSession(null)}
     />
   );
 }
