@@ -18,13 +18,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   }
 
   try {
-    // Update all non-completed orders for this table to COMPLETED
+    // Update all non-completed orders for this table to PAID
     await prisma.order.updateMany({
       where: { 
         tableId: id,
-        status: { notIn: ["COMPLETED", "CANCELLED"] }
+        status: { notIn: ["PAID", "CANCELLED"] }
       },
-      data: { status: "COMPLETED" }
+      data: { status: "PAID" }
     });
 
     const io = getIO();

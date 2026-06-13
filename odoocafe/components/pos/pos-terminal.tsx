@@ -72,6 +72,8 @@ function CollapsibleFloor({
   onToggle,
   onSelectTable,
   selectedTableId,
+  handleFreeTable,
+  isFreeing,
 }: {
   floor: Floor;
   tables: Table[];
@@ -79,6 +81,8 @@ function CollapsibleFloor({
   onToggle: () => void;
   onSelectTable: (tableId: string) => void;
   selectedTableId: string;
+  handleFreeTable: (tableId: string) => void;
+  isFreeing: boolean;
 }) {
   return (
     <div style={{ borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
@@ -133,7 +137,7 @@ function CollapsibleFloor({
                 const isSelected = selectedTableId === table.id;
 
                 return (
-                  <button
+                  <div
                     key={table.id}
                     onClick={() => onSelectTable(table.id)}
                     style={{
@@ -193,7 +197,31 @@ function CollapsibleFloor({
                         {formatCurrency(Number(activeOrder.grandTotal))}
                       </span>
                     )}
-                  </button>
+
+                    {hasActiveOrder && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isFreeing) return;
+                          handleFreeTable(table.id);
+                        }}
+                        style={{
+                          marginTop: "8px",
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          background: "rgba(239, 68, 68, 0.1)",
+                          color: "#ef4444",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          cursor: "pointer",
+                          width: "100%",
+                        }}
+                      >
+                        Free Table
+                      </button>
+                    )}
+                  </div>
                 );
               })}
               {tables.length === 0 && (
@@ -324,11 +352,10 @@ export function POSTerminal() {
 
   const [isFreeing, setIsFreeing] = useState(false);
 
-  const handleFreeTable = async () => {
-    if (!selectedTableId) return;
+  const handleFreeTable = async (tableId: string) => {
     setIsFreeing(true);
     try {
-      const res = await fetch(`/api/tables/${selectedTableId}/free`, {
+      const res = await fetch(`/api/tables/${tableId}/free`, {
         method: "POST",
       });
       const data = await res.json();
@@ -452,6 +479,8 @@ export function POSTerminal() {
                         setStep("MENU");
                       }}
                       selectedTableId={selectedTableId}
+                      handleFreeTable={handleFreeTable}
+                      isFreeing={isFreeing}
                     />
                   );
                 })}
@@ -993,35 +1022,12 @@ export function POSTerminal() {
             color: "var(--color-text-muted)",
           }}
         >
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <span>Serving Target:</span>
-            <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
-              {selectedTableId && selectedTable
-                ? `Table ${selectedTable.tableNumber}`
-                : "Takeaway / Counter"}
-            </span>
-          </div>
-          {hasActiveOrders && (
-            <button
-              onClick={handleFreeTable}
-              disabled={isFreeing}
-              style={{
-                fontSize: "11px",
-                fontWeight: "600",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                background: "rgba(239, 68, 68, 0.1)",
-                color: "#ef4444",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-            >
-              {isFreeing ? "Freeing..." : "Free Table"}
-            </button>
-          )}
+          <span>Serving Target:</span>
+          <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
+            {selectedTableId && selectedTable
+              ? `Table ${selectedTable.tableNumber}`
+              : "Takeaway / Counter"}
+          </span>
         </div>
 
         {/* Cart Items */}
