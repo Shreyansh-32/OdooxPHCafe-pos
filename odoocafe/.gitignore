@@ -1,8 +1,6 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# ==============================
-# AI Agent & Developer Context Files (Sensitive)
-# ==============================
+# dependencies
 AGENTS.md
 CLAUDE.md
 context/
@@ -97,12 +95,4 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# ==============================
-# QR Codes (generated at runtime)
-# ==============================
-public/qrcodes/
-
-# ==============================
-# Upload / media directories
-# ==============================
-public/uploads/
+/app/generated/prisma
