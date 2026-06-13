@@ -15,6 +15,7 @@ import {
   Table2,
   Tag,
   Receipt,
+  Smile,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import Image from "next/image";
@@ -33,6 +34,7 @@ const navItems = {
     { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
     { href: "/admin/tables", label: "Tables & Floors", icon: Table2 },
     { href: "/admin/staff", label: "Staff", icon: Users },
+    { href: "/admin/customers", label: "Customers", icon: Smile },
     { href: "/admin/promotions", label: "Promotions", icon: Tag },
     { href: "/admin/orders", label: "Orders", icon: Receipt },
   ],
