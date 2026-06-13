@@ -8,6 +8,7 @@ import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, 
 import toast from "react-hot-toast";
 import Image from "next/image";
 import { CustomerPaymentSheet } from "@/components/customer/customer-payment-sheet";
+import { ReceiptPrinter } from "@/components/shared/receipt-printer";
 
 interface Product {
   id: string;
@@ -77,6 +78,7 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
   const [historyLoading, setHistoryLoading] = useState(false);
   const { socket } = useSocket();
   const [loggingOut, setLoggingOut] = useState(false);
+  const [receipt, setReceipt] = useState<any | null>(null);
 
   const handleLogout = async () => {
     setLoggingOut(true);
@@ -581,12 +583,32 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
             const res = await fetch(`/api/orders/${orderId}`);
             const data = await res.json();
             if (data.ok) {
+              const order = data.data;
+              setReceipt({
+                orderNumber: order.orderNumber,
+                tableNumber: order.table?.tableNumber || tableNumber,
+                floorName: order.table?.floor?.name || floorName,
+                customerName: order.customer?.name || customer.name,
+                items: order.items.map((i: any) => ({
+                  name: i.product.name,
+                  quantity: i.quantity,
+                  unitPrice: Number(i.product.price),
+                  lineTotal: Number(i.quantity * i.product.price),
+                })),
+                subtotal: Number(order.subtotal),
+                taxTotal: Number(order.taxTotal),
+                discountTotal: Number(order.discountTotal || 0),
+                grandTotal: Number(order.grandTotal),
+                paymentMethod: paymentMethod,
+                paidAt: new Date(order.createdAt),
+              });
+
               setActiveOrder({
                 orderId,
                 orderNumber,
                 status: "SENT",
-                grandTotal: Number(data.data.grandTotal),
-                items: data.data.items.map((i: any) => ({
+                grandTotal: Number(order.grandTotal),
+                items: order.items.map((i: any) => ({
                   productName: i.product.name,
                   quantity: i.quantity,
                   kdsStatus: i.kdsStatus,
@@ -600,6 +622,24 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
             setShowPayment(false);
             setShowCart(true);
           }}
+        />
+      )}
+
+      {/* ── Receipt Printer ── */}
+      {receipt && (
+        <ReceiptPrinter
+          orderNumber={receipt.orderNumber}
+          tableNumber={receipt.tableNumber}
+          floorName={receipt.floorName}
+          customerName={receipt.customerName}
+          items={receipt.items}
+          subtotal={receipt.subtotal}
+          taxTotal={receipt.taxTotal}
+          discountTotal={receipt.discountTotal}
+          grandTotal={receipt.grandTotal}
+          paymentMethod={receipt.paymentMethod}
+          paidAt={receipt.paidAt}
+          onClose={() => setReceipt(null)}
         />
       )}
     </div>
