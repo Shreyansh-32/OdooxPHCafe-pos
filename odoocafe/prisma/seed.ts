@@ -239,7 +239,7 @@ async function main() {
       name: "UPI / QR",
       type: "UPI",
       isEnabled: true,
-      upiId: "cafeodoo@upi", // Replace with actual UPI ID
+      upiId: "ch.shakish11123@oksbi", 
     },
   });
 

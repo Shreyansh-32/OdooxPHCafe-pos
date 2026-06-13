@@ -5,6 +5,7 @@ import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { formatCurrency } from "@/lib/utils";
 import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X } from "lucide-react";
+import { CustomerPaymentSheet } from "@/components/customer/customer-payment-sheet";
 
 interface Product {
   id: string;
@@ -65,6 +66,7 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeOrder, setActiveOrder] = useState<OrderStatus | null>(null);
   const [view, setView] = useState<"menu" | "status">("menu");
@@ -153,50 +155,9 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
 
   const placeOrder = async () => {
-    if (cart.length === 0) return;
-    setSubmitting(true);
-
-    try {
-      const orderRes = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableId, source: "CUSTOMER" }),
-      });
-      const orderData = await orderRes.json();
-      const orderId = orderData.data.id;
-
-      for (const item of cart) {
-        await fetch(`/api/orders/${orderId}/items`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ productId: item.productId, quantity: item.quantity, notes: item.notes }),
-        });
-      }
-
-      await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "SENT" }),
-      });
-
-      const fullOrder = await fetch(`/api/orders/${orderId}`).then((r) => r.json());
-      setActiveOrder({
-        orderId,
-        orderNumber: fullOrder.data.orderNumber,
-        status: "SENT",
-        grandTotal: Number(fullOrder.data.grandTotal),
-        items: fullOrder.data.items.map((i: any) => ({
-          productName: i.product.name,
-          quantity: i.quantity,
-          kdsStatus: i.kdsStatus,
-        })),
-      });
-      setCart([]);
-      setShowCart(false);
-      setView("status");
-    } finally {
-      setSubmitting(false);
-    }
+    // Now just opens the payment sheet
+    setShowCart(false);
+    setShowPayment(true);
   };
 
   const filteredProducts = products.filter(
@@ -437,6 +398,43 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
           to { transform: translateY(0); }
         }
       `}</style>
+
+      {/* ── Payment Sheet ── */}
+      {showPayment && (
+        <CustomerPaymentSheet
+          tableId={tableId}
+          cart={cart}
+          grandTotal={cartTotal + cartTax}
+          subtotal={cartTotal}
+          taxTotal={cartTax}
+          customerName={customer.name}
+          onSuccess={async (orderId, orderNumber, paymentMethod) => {
+            setShowPayment(false);
+            // Fetch full order for tracking
+            const res = await fetch(`/api/orders/${orderId}`);
+            const data = await res.json();
+            if (data.ok) {
+              setActiveOrder({
+                orderId,
+                orderNumber,
+                status: "SENT",
+                grandTotal: Number(data.data.grandTotal),
+                items: data.data.items.map((i: any) => ({
+                  productName: i.product.name,
+                  quantity: i.quantity,
+                  kdsStatus: i.kdsStatus,
+                })),
+              });
+            }
+            setCart([]);
+            setView("status");
+          }}
+          onBack={() => {
+            setShowPayment(false);
+            setShowCart(true);
+          }}
+        />
+      )}
     </div>
   );
 }
