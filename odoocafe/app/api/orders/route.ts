@@ -4,6 +4,12 @@ import { authOptions } from "@/lib/auth";
 import { getCustomerSession } from "@/lib/customer-auth";
 import { prisma } from "@/lib/prisma";
 import { createOrderSchema } from "@/lib/validations/order";
+import { SOCKET_EVENTS } from "@/lib/socket-events";
+
+function getIO() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (global as any).io;
+}
 
 // GET /api/orders — List orders
 export async function GET(request: Request) {
@@ -100,6 +106,17 @@ export async function POST(request: Request) {
         sessionId: sessionId || null,
       },
     });
+
+    // Notify admin room that a new order was created
+    const io = getIO();
+    if (io) {
+      io.to("admin").emit(SOCKET_EVENTS.ORDER_PLACED, {
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        status: order.status,
+        tableId: order.tableId,
+      });
+    }
 
     return NextResponse.json({ ok: true, data: order }, { status: 201 });
   } catch (error) {

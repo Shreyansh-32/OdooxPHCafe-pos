@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { formatCurrency } from "@/lib/utils";
 import { format } from "date-fns";
-import { Search, Eye, ShoppingBag } from "lucide-react";
+import { Search, ShoppingBag, Wifi, WifiOff } from "lucide-react";
+import { useSocket } from "@/components/providers/socket-provider";
+import { SOCKET_EVENTS } from "@/lib/socket-events";
 
 interface Order {
   id: string;
@@ -27,8 +29,11 @@ export function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const { socket, isConnected } = useSocket();
 
-  useEffect(() => {
+  const fetchOrdersRef = useRef<() => void>(null as any);
+
+  const fetchOrders = useCallback(() => {
     fetch("/api/orders?limit=100")
       .then((res) => res.json())
       .then((data) => {
@@ -37,6 +42,32 @@ export function OrdersManager() {
       })
       .catch(() => setLoading(false));
   }, []);
+
+  fetchOrdersRef.current = fetchOrders;
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  // Real-time: join admin room & refresh on order changes
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit(SOCKET_EVENTS.JOIN_ADMIN);
+
+    const handleOrderUpdate = () => {
+      fetchOrdersRef.current?.();
+    };
+
+    socket.on(SOCKET_EVENTS.ORDER_STATUS, handleOrderUpdate);
+    socket.on(SOCKET_EVENTS.ORDER_PLACED, handleOrderUpdate);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.ORDER_STATUS, handleOrderUpdate);
+      socket.off(SOCKET_EVENTS.ORDER_PLACED, handleOrderUpdate);
+    };
+  }, [socket]); // Only depends on socket
+
 
   const filteredOrders = orders.filter((o) => {
     if (!search) return true;
@@ -52,8 +83,26 @@ export function OrdersManager() {
     <div style={{ padding: "28px", maxWidth: "1200px" }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "24px" }}>
-        <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "800" }}>Order History</h1>
-        
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "800" }}>Order History</h1>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              fontSize: "12px",
+              fontWeight: "600",
+              color: isConnected ? "#22c55e" : "#ef4444",
+              padding: "3px 10px",
+              borderRadius: "999px",
+              background: isConnected ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+            }}
+          >
+            {isConnected ? <Wifi size={11} /> : <WifiOff size={11} />}
+            {isConnected ? "Live" : "Offline"}
+          </span>
+        </div>
+
         <div style={{ position: "relative", width: "300px" }}>
           <Search size={16} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-faint)" }} />
           <input

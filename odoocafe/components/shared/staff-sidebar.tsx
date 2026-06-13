@@ -12,7 +12,6 @@ import {
   Coffee,
   Users,
   UtensilsCrossed,
-  BarChart3,
   Table2,
   Tag,
   Receipt,
@@ -35,7 +34,6 @@ const navItems = {
     { href: "/admin/staff", label: "Staff", icon: Users },
     { href: "/admin/promotions", label: "Promotions", icon: Tag },
     { href: "/admin/orders", label: "Orders", icon: Receipt },
-    { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   ],
   CASHIER: [
     { href: "/pos", label: "POS Terminal", icon: ShoppingCart },
@@ -115,7 +113,9 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
         {items.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === "/pos" || item.href === "/kds"
+            item.href === "/admin"
+              ? pathname === "/admin"
+              : item.href === "/pos" || item.href === "/kds"
               ? pathname === item.href
               : pathname.startsWith(item.href);
 
