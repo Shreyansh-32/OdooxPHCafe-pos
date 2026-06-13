@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { formatCurrency } from "@/lib/utils";
-import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X, User } from "lucide-react";
 
 interface Product {
   id: string;
@@ -67,7 +67,9 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
   const [showCart, setShowCart] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeOrder, setActiveOrder] = useState<OrderStatus | null>(null);
-  const [view, setView] = useState<"menu" | "status">("menu");
+  const [view, setView] = useState<"menu" | "status" | "profile">("menu");
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const { socket } = useSocket();
 
   useEffect(() => {
@@ -199,6 +201,17 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
     }
   };
 
+  const loadProfile = () => {
+    setView("profile");
+    setHistoryLoading(true);
+    fetch("/api/orders?history=true&limit=20")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setOrderHistory(d.data || []);
+      })
+      .finally(() => setHistoryLoading(false));
+  };
+
   const filteredProducts = products.filter(
     (p) => !selectedCat || p.category.id === selectedCat
   );
@@ -218,11 +231,29 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(15,15,19,0.95)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${styleVars.border}`, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
           <div style={{ fontSize: "16px", fontWeight: "700", color: styleVars.text }}>☕ Café Odoo</div>
-          <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber} · {customer.name}</div>
+          <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber}</div>
         </div>
 
         {/* View toggle */}
         <div style={{ display: "flex", gap: "6px" }}>
+          <button
+            id="view-profile-btn"
+            onClick={loadProfile}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: view === "profile" ? "rgba(200,121,65,0.2)" : "transparent",
+              border: `1px solid ${view === "profile" ? "#c87941" : styleVars.border}`,
+              color: view === "profile" ? "#c87941" : styleVars.muted,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <User size={13} /> {customer.name.split(" ")[0]}
+          </button>
           {activeOrder && (
             <button
               id="view-status-btn"
@@ -314,6 +345,67 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
           >
             Browse Menu
           </button>
+        </div>
+      )}
+
+      {/* ===== PROFILE VIEW ===== */}
+      {view === "profile" && (
+        <div style={{ padding: "20px 16px", maxWidth: "500px", margin: "0 auto", paddingBottom: "120px" }}>
+          <div style={{ background: styleVars.card, border: `1px solid ${styleVars.border}`, borderRadius: "14px", padding: "20px", marginBottom: "24px", textAlign: "center" }}>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: `${styleVars.primary}22`, color: styleVars.primary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", fontWeight: "700", margin: "0 auto 12px" }}>
+              {customer.name.charAt(0).toUpperCase()}
+            </div>
+            <h2 style={{ margin: "0 0 4px", fontSize: "20px", fontWeight: "800" }}>{customer.name}</h2>
+            <p style={{ margin: 0, fontSize: "14px", color: styleVars.muted }}>{customer.email}</p>
+          </div>
+
+          <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px" }}>Order History</h3>
+          
+          {historyLoading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: styleVars.muted }}>Loading history...</div>
+          ) : orderHistory.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: styleVars.muted, background: styleVars.card, borderRadius: "14px", border: `1px solid ${styleVars.border}` }}>
+              <p>No past orders found.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {orderHistory.map((order) => {
+                const isCancelled = order.status === "CANCELLED";
+                return (
+                  <div key={order.id} style={{ background: styleVars.card, border: `1px solid ${styleVars.border}`, borderRadius: "14px", padding: "16px", opacity: isCancelled ? 0.7 : 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                      <div>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: styleVars.primary }}>Order #{order.orderNumber}</div>
+                        <div style={{ fontSize: "12px", color: styleVars.muted }}>
+                          {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "15px", fontWeight: "700" }}>{formatCurrency(Number(order.grandTotal))}</div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", padding: "2px 8px", borderRadius: "999px", display: "inline-block", marginTop: "4px", background: order.status === "PAID" ? "rgba(34,197,94,0.15)" : order.status === "CANCELLED" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)", color: order.status === "PAID" ? "#4ade80" : order.status === "CANCELLED" ? "#f87171" : "#fbbf24" }}>
+                          {order.status}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {order.table && (
+                      <div style={{ fontSize: "12px", color: styleVars.text, marginBottom: "8px", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px", display: "inline-block" }}>
+                        📍 {order.table.floor.name} - Table {order.table.tableNumber}
+                      </div>
+                    )}
+                    
+                    <div style={{ fontSize: "13px", color: styleVars.muted, display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {order.items.map((item: any) => (
+                        <div key={item.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{item.quantity}x {item.product.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 

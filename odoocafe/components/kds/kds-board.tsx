@@ -110,7 +110,7 @@ export function KDSBoard() {
         return next;
       });
       delete completionTimersRef.current[itemId];
-    }, 3000);
+    }, 600000); // 10 minutes
   }, []);
 
   const clearCompletedItemVisibility = useCallback((itemId: string) => {

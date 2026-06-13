@@ -88,7 +88,7 @@ export function POSTerminal() {
       const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "CASHIER", tableId: selectedTableId || null }),
+        body: JSON.stringify({ source: "CASHIER", tableId: selectedTableId || undefined }),
       });
       const orderData = await orderRes.json();
       const orderId = orderData.data.id;
