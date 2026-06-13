@@ -9,13 +9,13 @@ export const customerRegisterSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
   email: z.string().email("Invalid email"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  tableId: z.string().min(1, "Table ID required"),
+  tableId: z.string().min(1, "Table ID required").optional(),
 });
 
 export const customerLoginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(1, "Password required"),
-  tableId: z.string().min(1, "Table ID required"),
+  tableId: z.string().min(1, "Table ID required").optional(),
 });
 
 export type StaffLoginInput = z.infer<typeof staffLoginSchema>;

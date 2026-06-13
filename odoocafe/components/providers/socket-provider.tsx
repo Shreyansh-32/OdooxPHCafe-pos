@@ -4,7 +4,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
 } from "react";
 import { io, Socket } from "socket.io-client";
@@ -20,7 +19,7 @@ const SocketContext = createContext<SocketContextValue>({
 });
 
 export function SocketProvider({ children }: { children: React.ReactNode }) {
-  const socketRef = useRef<Socket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
@@ -29,29 +28,28 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       process.env.NEXT_PUBLIC_APP_URL ||
       window.location.origin;
 
-    const socket = io(socketUrl, {
+    const socketInstance = io(socketUrl, {
       transports: ["websocket", "polling"],
     });
 
-    socketRef.current = socket;
+    setSocket(socketInstance);
 
-    socket.on("connect", () => {
+    socketInstance.on("connect", () => {
       setIsConnected(true);
     });
 
-    socket.on("disconnect", () => {
+    socketInstance.on("disconnect", () => {
       setIsConnected(false);
     });
 
     return () => {
-      socket.disconnect();
+      socketInstance.disconnect();
+      setSocket(null);
     };
   }, []);
 
   return (
-    <SocketContext.Provider
-      value={{ socket: socketRef.current, isConnected }}
-    >
+    <SocketContext.Provider value={{ socket, isConnected }}>
       {children}
     </SocketContext.Provider>
   );

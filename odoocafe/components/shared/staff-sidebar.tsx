@@ -12,12 +12,13 @@ import {
   Coffee,
   Users,
   UtensilsCrossed,
-  BarChart3,
   Table2,
   Tag,
   Receipt,
+  Smile,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
+import Image from "next/image";
 
 interface Props {
   userName: string;
@@ -33,9 +34,9 @@ const navItems = {
     { href: "/admin/menu", label: "Menu", icon: UtensilsCrossed },
     { href: "/admin/tables", label: "Tables & Floors", icon: Table2 },
     { href: "/admin/staff", label: "Staff", icon: Users },
+    { href: "/admin/customers", label: "Customers", icon: Smile },
     { href: "/admin/promotions", label: "Promotions", icon: Tag },
     { href: "/admin/orders", label: "Orders", icon: Receipt },
-    { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   ],
   CASHIER: [
     { href: "/pos", label: "POS Terminal", icon: ShoppingCart },
@@ -86,18 +87,13 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div
             style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #c87941, #a06030)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "18px",
               flexShrink: 0,
             }}
           >
-            ☕
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={44} height={44} style={{ objectFit: "contain" }} />
           </div>
           <div>
             <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--color-text)" }}>
@@ -115,7 +111,9 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
         {items.map((item) => {
           const Icon = item.icon;
           const isActive =
-            item.href === "/pos" || item.href === "/kds"
+            item.href === "/admin"
+              ? pathname === "/admin"
+              : item.href === "/pos" || item.href === "/kds"
               ? pathname === item.href
               : pathname.startsWith(item.href);
 

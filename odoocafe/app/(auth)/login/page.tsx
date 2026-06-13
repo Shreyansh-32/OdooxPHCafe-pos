@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { staffLoginSchema, type StaffLoginInput } from "@/lib/validations/auth";
+import Image from "next/image";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -22,7 +23,6 @@ export default function LoginPage() {
 
   const onSubmit = async (data: StaffLoginInput) => {
     setLoading(true);
-    setError(null);
 
     const result = await signIn("credentials", {
       email: data.email,
@@ -33,9 +33,11 @@ export default function LoginPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Invalid email or password. Please try again.");
+      toast.error("Invalid email or password. Please try again.");
       return;
     }
+
+    toast.success("Signed in successfully!");
 
     const session = await getSession();
     const destination = session?.user?.role === "KITCHEN" ? "/kds" : "/pos";
@@ -83,19 +85,13 @@ export default function LoginPage() {
         <div style={{ textAlign: "center", marginBottom: "40px" }}>
           <div
             style={{
-              width: "72px",
-              height: "72px",
-              borderRadius: "20px",
-              background: "linear-gradient(135deg, #c87941, #a06030)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "32px",
               margin: "0 auto 16px",
-              boxShadow: "0 0 40px rgba(200, 121, 65, 0.3)",
             }}
           >
-            ☕
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={90} height={90} style={{ objectFit: "contain" }} />
           </div>
           <h1
             style={{
@@ -150,22 +146,6 @@ export default function LoginPage() {
                 </p>
               )}
             </div>
-
-            {/* Error */}
-            {error && (
-              <div
-                style={{
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  borderRadius: "8px",
-                  padding: "12px 16px",
-                  color: "#f87171",
-                  fontSize: "14px",
-                }}
-              >
-                {error}
-              </div>
-            )}
 
             {/* Submit */}
             <button

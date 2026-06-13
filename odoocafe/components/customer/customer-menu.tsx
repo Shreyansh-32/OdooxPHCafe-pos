@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from "react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { formatCurrency } from "@/lib/utils";
-import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X, User, LogOut } from "lucide-react";
+import toast from "react-hot-toast";
+import Image from "next/image";
 import { CustomerPaymentSheet } from "@/components/customer/customer-payment-sheet";
 
 interface Product {
@@ -51,6 +53,7 @@ interface Props {
   tableNumber: string;
   floorName: string;
   customer: CustomerSession;
+  onLogout?: () => void;
 }
 
 const KDS_STATUS_LABEL: Record<string, { label: string; color: string }> = {
@@ -60,7 +63,7 @@ const KDS_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   COMPLETED: { label: "Ready",      color: "#4ade80" },
 };
 
-export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Props) {
+export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogout }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCat, setSelectedCat] = useState<string | null>(null);
@@ -69,8 +72,27 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
   const [showPayment, setShowPayment] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [activeOrder, setActiveOrder] = useState<OrderStatus | null>(null);
-  const [view, setView] = useState<"menu" | "status">("menu");
+  const [view, setView] = useState<"menu" | "status" | "profile">("menu");
+  const [orderHistory, setOrderHistory] = useState<any[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const { socket } = useSocket();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await fetch("/api/customer/me", { method: "DELETE" });
+      if (onLogout) {
+        onLogout();
+      } else {
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoggingOut(false);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
@@ -160,6 +182,17 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
     setShowPayment(true);
   };
 
+  const loadProfile = () => {
+    setView("profile");
+    setHistoryLoading(true);
+    fetch("/api/orders?history=true&limit=20")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok) setOrderHistory(d.data || []);
+      })
+      .finally(() => setHistoryLoading(false));
+  };
+
   const filteredProducts = products.filter(
     (p) => !selectedCat || p.category.id === selectedCat
   );
@@ -177,13 +210,54 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
     <div style={{ minHeight: "100vh", background: styleVars.bg, color: styleVars.text, fontFamily: "inherit" }}>
       {/* Mobile Header */}
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(15,15,19,0.95)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${styleVars.border}`, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: "16px", fontWeight: "700", color: styleVars.text }}>☕ Café Odoo</div>
-          <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber} · {customer.name}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Image src="/CafePOS.png" alt="CafePOS Logo" width={32} height={32} style={{ objectFit: "contain" }} />
+          <div>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: styleVars.text }}>Café Odoo</div>
+            <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber}</div>
+          </div>
         </div>
 
         {/* View toggle */}
-        <div style={{ display: "flex", gap: "6px" }}>
+        <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+          <button
+            id="customer-logout-btn"
+            onClick={handleLogout}
+            disabled={loggingOut}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: "transparent",
+              border: `1px solid ${styleVars.border}`,
+              color: styleVars.muted,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              cursor: "pointer",
+            }}
+          >
+            <LogOut size={13} />
+          </button>
+          <button
+            id="view-profile-btn"
+            onClick={loadProfile}
+            style={{
+              padding: "7px 12px",
+              borderRadius: "8px",
+              fontSize: "12px",
+              fontWeight: "600",
+              background: view === "profile" ? "rgba(200,121,65,0.2)" : "transparent",
+              border: `1px solid ${view === "profile" ? "#c87941" : styleVars.border}`,
+              color: view === "profile" ? "#c87941" : styleVars.muted,
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <User size={13} /> {customer.name.split(" ")[0]}
+          </button>
           {activeOrder && (
             <button
               id="view-status-btn"
@@ -278,6 +352,91 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
         </div>
       )}
 
+      {/* ===== PROFILE VIEW ===== */}
+      {view === "profile" && (
+        <div style={{ padding: "20px 16px", maxWidth: "500px", margin: "0 auto", paddingBottom: "120px" }}>
+          <div style={{ background: styleVars.card, border: `1px solid ${styleVars.border}`, borderRadius: "14px", padding: "20px", marginBottom: "24px", textAlign: "center" }}>
+            <div style={{ width: "60px", height: "60px", borderRadius: "50%", background: `${styleVars.primary}22`, color: styleVars.primary, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "24px", fontWeight: "700", margin: "0 auto 12px" }}>
+              {customer.name.charAt(0).toUpperCase()}
+            </div>
+            <h2 style={{ margin: "0 0 4px", fontSize: "20px", fontWeight: "800" }}>{customer.name}</h2>
+            <p style={{ margin: 0, fontSize: "14px", color: styleVars.muted }}>{customer.email}</p>
+            <button
+              id="profile-logout-btn"
+              onClick={handleLogout}
+              disabled={loggingOut}
+              style={{
+                marginTop: "16px",
+                width: "100%",
+                padding: "10px",
+                borderRadius: "10px",
+                background: "rgba(239, 68, 68, 0.1)",
+                border: "1px solid rgba(239, 68, 68, 0.2)",
+                color: "#f87171",
+                fontSize: "14px",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                cursor: "pointer",
+                transition: "all 0.2s"
+              }}
+            >
+              <LogOut size={14} /> {loggingOut ? "Logging out..." : "Logout"}
+            </button>
+          </div>
+
+          <h3 style={{ fontSize: "16px", fontWeight: "700", marginBottom: "16px" }}>Order History</h3>
+          
+          {historyLoading ? (
+            <div style={{ textAlign: "center", padding: "40px", color: styleVars.muted }}>Loading history...</div>
+          ) : orderHistory.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "40px", color: styleVars.muted, background: styleVars.card, borderRadius: "14px", border: `1px solid ${styleVars.border}` }}>
+              <p>No past orders found.</p>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              {orderHistory.map((order) => {
+                const isCancelled = order.status === "CANCELLED";
+                return (
+                  <div key={order.id} style={{ background: styleVars.card, border: `1px solid ${styleVars.border}`, borderRadius: "14px", padding: "16px", opacity: isCancelled ? 0.7 : 1 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "12px" }}>
+                      <div>
+                        <div style={{ fontSize: "15px", fontWeight: "700", color: styleVars.primary }}>Order #{order.orderNumber}</div>
+                        <div style={{ fontSize: "12px", color: styleVars.muted }}>
+                          {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: "15px", fontWeight: "700" }}>{formatCurrency(Number(order.grandTotal))}</div>
+                        <div style={{ fontSize: "11px", fontWeight: "700", padding: "2px 8px", borderRadius: "999px", display: "inline-block", marginTop: "4px", background: order.status === "PAID" ? "rgba(34,197,94,0.15)" : order.status === "CANCELLED" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)", color: order.status === "PAID" ? "#4ade80" : order.status === "CANCELLED" ? "#f87171" : "#fbbf24" }}>
+                          {order.status}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {order.table && (
+                      <div style={{ fontSize: "12px", color: styleVars.text, marginBottom: "8px", background: "rgba(255,255,255,0.05)", padding: "4px 8px", borderRadius: "4px", display: "inline-block" }}>
+                        📍 {order.table.floor.name} - Table {order.table.tableNumber}
+                      </div>
+                    )}
+                    
+                    <div style={{ fontSize: "13px", color: styleVars.muted, display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {order.items.map((item: any) => (
+                        <div key={item.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                          <span>{item.quantity}x {item.product.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ===== MENU VIEW ===== */}
       {view === "menu" && (
         <div style={{ paddingBottom: "120px" }}>
@@ -309,23 +468,31 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
               return (
                 <div
                   key={product.id}
-                  style={{ background: styleVars.card, border: `1px solid ${styleVars.border}`, borderRadius: "14px", padding: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                  style={{
+                    background: styleVars.card,
+                    border: `1px solid ${product.category.color ? product.category.color + "33" : styleVars.border}`,
+                    borderRadius: "14px",
+                    padding: "16px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center"
+                  }}
                 >
                   <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: "11px", color: product.category.color, fontWeight: "700", marginBottom: "2px" }}>{product.category.name}</div>
+                    <div style={{ fontSize: "11px", color: styleVars.muted, fontWeight: "700", marginBottom: "2px" }}>{product.category.name}</div>
                     <div style={{ fontSize: "15px", fontWeight: "700", marginBottom: "2px" }}>{product.name}</div>
                     {product.description && <div style={{ fontSize: "12px", color: styleVars.muted }}>{product.description}</div>}
-                    <div style={{ fontSize: "16px", fontWeight: "800", color: styleVars.primary, marginTop: "6px" }}>{formatCurrency(Number(product.price))}</div>
+                    <div style={{ fontSize: "16px", fontWeight: "800", color: product.category.color || styleVars.primary, marginTop: "6px" }}>{formatCurrency(Number(product.price))}</div>
                   </div>
                   <div style={{ marginLeft: "12px", flexShrink: 0 }}>
                     {inCart ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <button id={`dec-${product.id}`} onClick={() => updateQty(product.id, inCart.quantity - 1)} style={{ width: "30px", height: "30px", borderRadius: "8px", background: styleVars.border, color: styleVars.text, padding: 0, justifyContent: "center", border: "none" }}><Minus size={13} /></button>
                         <span style={{ fontWeight: "700", fontSize: "16px", minWidth: "20px", textAlign: "center" }}>{inCart.quantity}</span>
-                        <button id={`inc-${product.id}`} onClick={() => addToCart(product)} style={{ width: "30px", height: "30px", borderRadius: "8px", background: styleVars.primary, color: "#fff", padding: 0, justifyContent: "center", border: "none" }}><Plus size={13} /></button>
+                        <button id={`inc-${product.id}`} onClick={() => addToCart(product)} style={{ width: "30px", height: "30px", borderRadius: "8px", background: product.category.color || styleVars.primary, color: "#fff", padding: 0, justifyContent: "center", border: "none" }}><Plus size={13} /></button>
                       </div>
                     ) : (
-                      <button id={`add-${product.id}`} onClick={() => addToCart(product)} style={{ width: "40px", height: "40px", borderRadius: "10px", background: `${styleVars.primary}22`, color: styleVars.primary, border: `1px solid ${styleVars.primary}44`, padding: 0, justifyContent: "center" }}>
+                      <button id={`add-${product.id}`} onClick={() => addToCart(product)} style={{ width: "40px", height: "40px", borderRadius: "10px", background: `${product.category.color || styleVars.primary}22`, color: product.category.color || styleVars.primary, border: `1px solid ${product.category.color ? product.category.color + "44" : styleVars.primary + "44"}`, padding: 0, justifyContent: "center" }}>
                         <Plus size={18} />
                       </button>
                     )}

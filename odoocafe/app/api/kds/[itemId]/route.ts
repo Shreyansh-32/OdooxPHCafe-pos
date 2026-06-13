@@ -41,11 +41,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       product: { select: { name: true } },
       order: {
         include: {
-          items: { select: { kdsStatus: true } },
           table: { select: { tableNumber: true } },
         },
       },
     },
+  });
+
+  // Re-fetch items AFTER the update to avoid stale pre-update data
+  const freshItems = await prisma.orderItem.findMany({
+    where: { orderId: item.orderId },
+    select: { kdsStatus: true },
   });
 
   const io = getIO();
@@ -67,12 +72,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Check if ALL items in the order are COMPLETED
-    const allCompleted = item.order.items.every(
+    // Check if ALL items in the order are COMPLETED (using fresh data)
+    const allCompleted = freshItems.every(
       (i: { kdsStatus: string }) => i.kdsStatus === "COMPLETED"
     );
 
-    if (allCompleted && kdsStatus === "COMPLETED") {
+    if (allCompleted) {
       const completePayload = {
         orderId: item.orderId,
         orderNumber: item.order.orderNumber,

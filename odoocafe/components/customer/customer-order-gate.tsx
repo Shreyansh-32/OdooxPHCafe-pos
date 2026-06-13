@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { CustomerAuth } from "./customer-auth";
 import { CustomerMenu } from "./customer-menu";
 
+import Image from "next/image";
+
 interface Props {
   tableId: string;
   tableToken: string;
@@ -45,8 +47,10 @@ export function CustomerOrderGate({ tableId, tableToken, tableNumber, floorName 
           background: "#0f0f13",
         }}
       >
-        <div style={{ textAlign: "center", color: "#8a8a9a" }}>
-          <div style={{ fontSize: "40px", marginBottom: "12px" }}>☕</div>
+        <div style={{ textAlign: "center", color: "#8a8a9a", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{ marginBottom: "12px" }}>
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={80} height={80} style={{ objectFit: "contain" }} />
+          </div>
           <p>Loading...</p>
         </div>
       </div>
@@ -70,6 +74,7 @@ export function CustomerOrderGate({ tableId, tableToken, tableNumber, floorName 
       tableNumber={tableNumber}
       floorName={floorName}
       customer={session}
+      onLogout={() => setSession(null)}
     />
   );
 }

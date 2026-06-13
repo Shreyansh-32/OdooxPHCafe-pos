@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   TrendingUp,
   ShoppingBag,
@@ -8,8 +8,12 @@ import {
   IndianRupee,
   BarChart3,
   RefreshCw,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
+import { useSocket } from "@/components/providers/socket-provider";
+import { SOCKET_EVENTS } from "@/lib/socket-events";
 import {
   AreaChart,
   Area,
@@ -46,9 +50,14 @@ export function AdminDashboard() {
   const [data, setData] = useState<ReportData | null>(null);
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const { socket, isConnected } = useSocket();
 
-  const fetchData = async () => {
+  // Use ref so the socket effect never needs fetchData as a dependency
+  // (prevents listener re-registration on every render)
+  const fetchDataRef = useRef<() => Promise<void>>(null as any);
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/reports?period=${period}`);
@@ -60,11 +69,38 @@ export function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [period]);
+
+  // Keep the ref current so the socket handler always calls the latest version
+  fetchDataRef.current = fetchData;
 
   useEffect(() => {
     fetchData();
-  }, [period]);
+  }, [fetchData]);
+
+  // Real-time: join admin room & auto-refresh on any order activity
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit(SOCKET_EVENTS.JOIN_ADMIN);
+
+    const handleRefresh = () => {
+      fetchDataRef.current?.();
+    };
+
+    // Listen to all order-related events that affect KPIs
+    socket.on(SOCKET_EVENTS.ORDER_STATUS, handleRefresh);
+    socket.on(SOCKET_EVENTS.ORDER_PLACED, handleRefresh);
+    socket.on(SOCKET_EVENTS.PAYMENT_RECEIVED, handleRefresh);
+    socket.on(SOCKET_EVENTS.KDS_ORDER_COMPLETE, handleRefresh);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.ORDER_STATUS, handleRefresh);
+      socket.off(SOCKET_EVENTS.ORDER_PLACED, handleRefresh);
+      socket.off(SOCKET_EVENTS.PAYMENT_RECEIVED, handleRefresh);
+      socket.off(SOCKET_EVENTS.KDS_ORDER_COMPLETE, handleRefresh);
+    };
+  }, [socket]); // Only depends on socket — no fetchData in deps array
 
   const kpis = data?.kpis;
 
@@ -85,9 +121,27 @@ export function AdminDashboard() {
           <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "800" }}>
             Dashboard
           </h1>
-          <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
-            Last updated: {format(lastUpdated, "HH:mm:ss")}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
+            <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "14px" }}>
+              Last updated: {lastUpdated ? format(lastUpdated, "HH:mm:ss") : "--:--:--"}
+            </p>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "4px",
+                fontSize: "12px",
+                fontWeight: "600",
+                color: isConnected ? "#22c55e" : "#ef4444",
+                padding: "2px 8px",
+                borderRadius: "999px",
+                background: isConnected ? "rgba(34,197,94,0.1)" : "rgba(239,68,68,0.1)",
+              }}
+            >
+              {isConnected ? <Wifi size={11} /> : <WifiOff size={11} />}
+              {isConnected ? "Live" : "Offline"}
+            </span>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
