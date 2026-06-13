@@ -171,7 +171,7 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
         {/* Not a Customer Button */}
         <div style={{ marginTop: "20px", textAlign: "center" }}>
           <a
-            href="http://localhost:3000/login"
+            href="http://localhost:3001/login"
             id="not-a-customer-btn"
             style={{
               display: "inline-flex",

@@ -421,7 +421,7 @@ export default function CustomerLoginPage() {
           }}
         >
           <a
-            href="http://localhost:3000/login"
+            href="http://localhost:3001/login"
             id="not-a-customer-btn"
             style={{
               display: "inline-flex",
