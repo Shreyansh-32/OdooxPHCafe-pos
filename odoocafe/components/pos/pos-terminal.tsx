@@ -290,15 +290,6 @@ export function POSTerminal() {
     };
   }, [socket]);
 
-  // Success message auto-clear
-  useEffect(() => {
-    if (activeOrderId) {
-      const timer = setTimeout(() => {
-        setActiveOrderId(null);
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [activeOrderId]);
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
@@ -671,27 +662,6 @@ export function POSTerminal() {
         {/* Modal Overlay rendered here */}
         {renderTableModal()}
 
-        {/* Success message overlay */}
-        {activeOrderId && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "24px",
-              right: "24px",
-              background: "rgba(34, 197, 94, 0.15)",
-              border: "1px solid rgba(34, 197, 94, 0.3)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              color: "#4ade80",
-              fontSize: "14px",
-              fontWeight: "600",
-              animation: "fadeIn 0.3s ease",
-              zIndex: 100,
-            }}
-          >
-            ✓ Order sent to kitchen!
-          </div>
-        )}
       </div>
     );
   }
