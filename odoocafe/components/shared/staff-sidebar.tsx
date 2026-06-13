@@ -17,6 +17,7 @@ import {
   Receipt,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
+import Image from "next/image";
 
 interface Props {
   userName: string;
@@ -84,18 +85,13 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
           <div
             style={{
-              width: "36px",
-              height: "36px",
-              borderRadius: "10px",
-              background: "linear-gradient(135deg, #c87941, #a06030)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontSize: "18px",
               flexShrink: 0,
             }}
           >
-            ☕
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={44} height={44} style={{ objectFit: "contain" }} />
           </div>
           <div>
             <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--color-text)" }}>

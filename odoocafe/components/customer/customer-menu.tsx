@@ -5,6 +5,8 @@ import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { formatCurrency } from "@/lib/utils";
 import { ShoppingCart, Plus, Minus, Trash2, Send, Clock, CheckCircle2, ChefHat, CreditCard, X, User } from "lucide-react";
+import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface Product {
   id: string;
@@ -196,6 +198,10 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
       setCart([]);
       setShowCart(false);
       setView("status");
+      toast.success("Order placed successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to place order");
     } finally {
       setSubmitting(false);
     }
@@ -229,9 +235,12 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer }: Prop
     <div style={{ minHeight: "100vh", background: styleVars.bg, color: styleVars.text, fontFamily: "inherit" }}>
       {/* Mobile Header */}
       <div style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(15,15,19,0.95)", backdropFilter: "blur(12px)", borderBottom: `1px solid ${styleVars.border}`, padding: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <div style={{ fontSize: "16px", fontWeight: "700", color: styleVars.text }}>☕ Café Odoo</div>
-          <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber}</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Image src="/CafePOS.png" alt="CafePOS Logo" width={32} height={32} style={{ objectFit: "contain" }} />
+          <div>
+            <div style={{ fontSize: "16px", fontWeight: "700", color: styleVars.text }}>Café Odoo</div>
+            <div style={{ fontSize: "12px", color: styleVars.muted }}>{floorName} · Table {tableNumber}</div>
+          </div>
         </div>
 
         {/* View toggle */}

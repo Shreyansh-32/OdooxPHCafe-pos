@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { customerRegisterSchema, customerLoginSchema } from "@/lib/validations/auth";
 import type { z } from "zod";
+import Image from "next/image";
+import toast from "react-hot-toast";
 
 type RegisterInput = z.infer<typeof customerRegisterSchema>;
 type LoginInput = z.infer<typeof customerLoginSchema>;
@@ -18,7 +20,6 @@ interface Props {
 
 export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const registerForm = useForm<RegisterInput>({
@@ -33,7 +34,6 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
 
   const handleRegister = async (data: RegisterInput) => {
     setLoading(true);
-    setError(null);
     const res = await fetch("/api/customer/register", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -41,13 +41,13 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
     });
     const json = await res.json();
     setLoading(false);
-    if (!json.ok) { setError(json.error); return; }
+    if (!json.ok) { toast.error(json.error); return; }
+    toast.success("Account created successfully!");
     onSuccess(json.data);
   };
 
   const handleLogin = async (data: LoginInput) => {
     setLoading(true);
-    setError(null);
     const res = await fetch("/api/customer/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,7 +55,8 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
     });
     const json = await res.json();
     setLoading(false);
-    if (!json.ok) { setError(json.error); return; }
+    if (!json.ok) { toast.error(json.error); return; }
+    toast.success("Signed in successfully!");
     onSuccess(json.data);
   };
 
@@ -88,7 +89,9 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
       <div style={{ width: "100%", maxWidth: "400px", animation: "fadeIn 0.4s ease" }}>
         {/* Table badge */}
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
-          <div style={{ fontSize: "48px", marginBottom: "12px" }}>☕</div>
+          <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center" }}>
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={80} height={80} style={{ objectFit: "contain" }} />
+          </div>
           <h1 style={{ margin: "0 0 6px", fontSize: "26px", fontWeight: "800", background: "linear-gradient(135deg, #f0eee8, #c87941)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Café Odoo
           </h1>
@@ -105,7 +108,7 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
               <button
                 key={m}
                 id={`auth-mode-${m}`}
-                onClick={() => { setMode(m); setError(null); }}
+                onClick={() => { setMode(m); }}
                 style={{
                   flex: 1,
                   padding: "9px",
@@ -122,13 +125,6 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
               </button>
             ))}
           </div>
-
-          {/* Error */}
-          {error && (
-            <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: "8px", padding: "12px 16px", color: "#f87171", fontSize: "14px", marginBottom: "16px" }}>
-              {error}
-            </div>
-          )}
 
           {mode === "register" ? (
             <form onSubmit={registerForm.handleSubmit(handleRegister)} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
