@@ -11,7 +11,7 @@ import { SOCKET_EVENTS } from "./lib/socket-events";
 
 const dev = process.env.NODE_ENV !== "production";
 const hostname = "localhost";
-const port = parseInt(process.env.PORT || "3000", 10);
+const port = parseInt(process.env.PORT || "3001", 10);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
@@ -38,8 +38,24 @@ app.prepare().then(() => {
   });
 
   // ---- Redis Adapter for multi-instance scaling ----
-  const pubClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379");
+  const pubClient = new Redis(process.env.REDIS_URL || "redis://localhost:6379", {
+    maxRetriesPerRequest: 1,
+    enableReadyCheck: false,
+    lazyConnect: true,
+    retryStrategy: (times) => {
+      if (times > 3) return null;
+      return Math.min(times * 500, 2000);
+    },
+  });
   const subClient = pubClient.duplicate();
+
+  pubClient.on("error", () => {
+    // Redis is optional in development; fall back to in-memory Socket.IO.
+  });
+
+  subClient.on("error", () => {
+    // Redis is optional in development; fall back to in-memory Socket.IO.
+  });
 
   Promise.all([pubClient.ping(), subClient.ping()]).then(() => {
     io.adapter(createAdapter(pubClient, subClient));
