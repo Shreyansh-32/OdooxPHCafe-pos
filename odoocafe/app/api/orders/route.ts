@@ -92,18 +92,28 @@ export async function POST(request: Request) {
 
     const { tableId, source, customerNote, sessionId } = parsed.data;
 
+    const isCashier = source === "CASHIER";
+
+    // Verify correct session exists for the source
+    if (isCashier && !staffSession) {
+      return NextResponse.json({ ok: false, error: "Staff session required" }, { status: 401 });
+    }
+    if (!isCashier && !customerSession) {
+      return NextResponse.json({ ok: false, error: "Customer session required" }, { status: 401 });
+    }
+
     const order = await prisma.order.create({
       data: {
         status: "DRAFT",
-        source: staffSession ? "CASHIER" : "CUSTOMER",
+        source,
         customerNote,
         subtotal: 0,
         taxTotal: 0,
         discountTotal: 0,
         grandTotal: 0,
-        tableId: tableId || (customerSession?.tableId ?? null),
-        userId: staffSession?.user.id || null,
-        customerId: customerSession?.customerId || null,
+        tableId: tableId || (!isCashier ? customerSession?.tableId ?? null : null),
+        userId: isCashier ? staffSession?.user.id || null : null,
+        customerId: !isCashier ? customerSession?.customerId || null : null,
         sessionId: sessionId || null,
       },
     });
@@ -121,6 +131,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, data: order }, { status: 201 });
   } catch (error) {
+    console.error("[POST /api/orders] Failed to create order:", error);
     return NextResponse.json(
       { ok: false, error: "Failed to create order" },
       { status: 500 }

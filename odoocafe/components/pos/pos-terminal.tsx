@@ -223,7 +223,7 @@ export function POSTerminal() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const [showPayment, setShowPayment] = useState(false);
   const [showCheckout, setShowCheckout] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string; type: string }[]>([]);
@@ -322,56 +322,36 @@ export function POSTerminal() {
     });
   };
 
-  const handleSendToKitchen = async () => {
-    if (items.length === 0) return;
-    setIsSubmitting(true);
+  const [isFreeing, setIsFreeing] = useState(false);
 
+  const handleFreeTable = async () => {
+    if (!selectedTableId) return;
+    setIsFreeing(true);
     try {
-      // Create order
-      const orderRes = await fetch("/api/orders", {
+      const res = await fetch(`/api/tables/${selectedTableId}/free`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "CASHIER", ...(selectedTableId ? { tableId: selectedTableId } : {}) }),
       });
-      const orderData = await orderRes.json();
-      if (!orderData.ok) {
-        throw new Error(orderData.error || "Failed to create order");
+      const data = await res.json();
+      if (data.ok) {
+        toast.success("Table freed successfully");
+        // Refresh tables
+        const tblsRes = await fetch("/api/tables");
+        const tblsData = await tblsRes.json();
+        if (tblsData.ok) {
+          setTables(tblsData.data || []);
+        }
+      } else {
+        toast.error(data.error || "Failed to free table");
       }
-      const orderId = orderData.data.id;
-
-      // Add items
-      for (const item of items) {
-        await fetch(`/api/orders/${orderId}/items`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            productId: item.productId,
-            quantity: item.quantity,
-            notes: item.notes,
-          }),
-        });
-      }
-
-      // Send to kitchen
-      await fetch(`/api/orders/${orderId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "SENT" }),
-      });
-
-      clearCart();
-      setSelectedTableId("");
-      toast.success("Order sent to kitchen!");
-      setStep("TABLE_SELECTION");
     } catch (err) {
-      console.error(err);
-      toast.error("Failed to send order");
+      toast.error("Failed to free table");
+    } finally {
+      setIsFreeing(false);
     }
-
-    setIsSubmitting(false);
   };
 
   const selectedTable = tables.find((t) => t.id === selectedTableId);
+  const hasActiveOrders = selectedTable && selectedTable.orders && selectedTable.orders.length > 0;
 
   // Render modal for table selection
   const renderTableModal = () => {
@@ -1013,12 +993,35 @@ export function POSTerminal() {
             color: "var(--color-text-muted)",
           }}
         >
-          <span>Serving Target:</span>
-          <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
-            {selectedTableId && selectedTable
-              ? `Table ${selectedTable.tableNumber}`
-              : "Takeaway / Counter"}
-          </span>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span>Serving Target:</span>
+            <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
+              {selectedTableId && selectedTable
+                ? `Table ${selectedTable.tableNumber}`
+                : "Takeaway / Counter"}
+            </span>
+          </div>
+          {hasActiveOrders && (
+            <button
+              onClick={handleFreeTable}
+              disabled={isFreeing}
+              style={{
+                fontSize: "11px",
+                fontWeight: "600",
+                padding: "4px 10px",
+                borderRadius: "6px",
+                background: "rgba(239, 68, 68, 0.1)",
+                color: "#ef4444",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px"
+              }}
+            >
+              {isFreeing ? "Freeing..." : "Free Table"}
+            </button>
+          )}
         </div>
 
         {/* Cart Items */}
@@ -1184,31 +1187,6 @@ export function POSTerminal() {
                 Checkout &amp; Pay
               </button>
 
-              {/* Send to kitchen (table service — pay later) */}
-              <button
-                id="send-to-kitchen-btn"
-                onClick={handleSendToKitchen}
-                disabled={isSubmitting}
-                style={{
-                  background: "transparent",
-                  color: "var(--color-primary)",
-                  padding: "11px",
-                  justifyContent: "center",
-                  fontWeight: "600",
-                  fontSize: "14px",
-                  border: "1px solid rgba(200,121,65,0.4)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  borderRadius: "10px",
-                  cursor: "pointer",
-                  width: "100%",
-                }}
-              >
-                <Send size={15} />
-                {isSubmitting ? "Sending..." : "Send to Kitchen (Pay Later)"}
-              </button>
-
               <button
                 id="clear-cart-btn"
                 onClick={() => {
@@ -1244,6 +1222,7 @@ export function POSTerminal() {
           subtotal={subtotal()}
           taxTotal={taxTotal()}
           items={items}
+          tableId={selectedTableId || null}
           onSuccess={async (orderId, method) => {
             // Capture snapshot BEFORE clearing cart
             const snap = {
