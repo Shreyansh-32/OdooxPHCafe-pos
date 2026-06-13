@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 
 // GET /api/staff
-export async function GET() {
+export async function GET(req : NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session || session.user.role !== "ADMIN")
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 403 });
@@ -40,3 +40,4 @@ export async function POST(req: Request) {
   });
   return NextResponse.json({ ok: true, data: { ...user, isActive: !user.isArchived } });
 }
+
