@@ -50,7 +50,7 @@ export function AdminDashboard() {
   const [data, setData] = useState<ReportData | null>(null);
   const [period, setPeriod] = useState<"7d" | "30d" | "90d">("7d");
   const [loading, setLoading] = useState(true);
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const { socket, isConnected } = useSocket();
 
   // Use ref so the socket effect never needs fetchData as a dependency
@@ -123,7 +123,7 @@ export function AdminDashboard() {
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "4px" }}>
             <p style={{ margin: 0, color: "var(--color-text-muted)", fontSize: "14px" }}>
-              Last updated: {format(lastUpdated, "HH:mm:ss")}
+              Last updated: {lastUpdated ? format(lastUpdated, "HH:mm:ss") : "--:--:--"}
             </p>
             <span
               style={{
