@@ -33,6 +33,8 @@ export function POSTerminal() {
   const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string; type: string }[]>([]);
+  const [tables, setTables] = useState<{ id: string; tableNumber: string }[]>([]);
+  const [selectedTableId, setSelectedTableId] = useState<string>("");
 
   const { items, addItem, removeItem, updateQuantity, clearCart, subtotal, taxTotal, grandTotal, totalItems } = useCartStore();
   const { socket, isConnected } = useSocket();
@@ -42,9 +44,11 @@ export function POSTerminal() {
       fetch("/api/products").then((r) => r.json()),
       fetch("/api/categories").then((r) => r.json()),
       fetch("/api/sessions").then((r) => r.json()),
-    ]).then(([prod, cat, sess]) => {
+      fetch("/api/tables").then((r) => r.json()),
+    ]).then(([prod, cat, sess, tbls]) => {
       setProducts(prod.data || []);
       setCategories(cat.data || []);
+      setTables(tbls.data || []);
     });
 
     // Fetch payment methods
@@ -84,7 +88,7 @@ export function POSTerminal() {
       const orderRes = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "CASHIER" }),
+        body: JSON.stringify({ source: "CASHIER", tableId: selectedTableId || null }),
       });
       const orderData = await orderRes.json();
       const orderId = orderData.data.id;
@@ -111,6 +115,7 @@ export function POSTerminal() {
 
       setActiveOrderId(orderId);
       clearCart();
+      setSelectedTableId("");
     } catch (err) {
       console.error(err);
     }
@@ -387,6 +392,28 @@ export function POSTerminal() {
               {totalItems()}
             </span>
           )}
+        </div>
+
+        {/* Table Selection */}
+        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--color-border-muted)" }}>
+          <select
+            value={selectedTableId}
+            onChange={(e) => setSelectedTableId(e.target.value)}
+            style={{
+              width: "100%",
+              padding: "8px 12px",
+              borderRadius: "8px",
+              background: "var(--color-bg-overlay)",
+              border: "1px solid var(--color-border-muted)",
+              color: "var(--color-text)",
+              fontSize: "13px",
+            }}
+          >
+            <option value="">No Table (Takeaway/Counter)</option>
+            {tables.map(t => (
+              <option key={t.id} value={t.id}>Table {t.tableNumber}</option>
+            ))}
+          </select>
         </div>
 
         {/* Cart Items */}

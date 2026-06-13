@@ -15,6 +15,7 @@ import {
   BarChart3,
   Table2,
   Tag,
+  Receipt,
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 
@@ -33,6 +34,7 @@ const navItems = {
     { href: "/admin/tables", label: "Tables & Floors", icon: Table2 },
     { href: "/admin/staff", label: "Staff", icon: Users },
     { href: "/admin/promotions", label: "Promotions", icon: Tag },
+    { href: "/admin/orders", label: "Orders", icon: Receipt },
     { href: "/admin/reports", label: "Reports", icon: BarChart3 },
   ],
   CASHIER: [

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Plus, Pencil, Trash2, Shield, Coffee, ChefHat } from "lucide-react";
 import { format } from "date-fns";
 
@@ -13,6 +13,8 @@ interface StaffMember {
   createdAt: string;
 }
 
+type StaffRole = StaffMember["role"];
+
 const ROLE_CONFIG = {
   ADMIN:   { icon: Shield,  color: "#c87941", bg: "rgba(200,121,65,0.15)",  label: "Admin" },
   CASHIER: { icon: Coffee,  color: "#3b82f6", bg: "rgba(59,130,246,0.15)",  label: "Cashier" },
@@ -22,9 +24,10 @@ const ROLE_CONFIG = {
 export function StaffManager() {
   const [staff, setStaff] = useState<StaffMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [editMember, setEditMember] = useState<StaffMember | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", role: "CASHIER" as "ADMIN"|"CASHIER"|"KITCHEN", password: "" });
+  const [form, setForm] = useState({ name: "", email: "", role: "CASHIER" as StaffRole, password: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +36,19 @@ export function StaffManager() {
       .then((r) => r.json())
       .then((d) => { setStaff(d.data || []); setLoading(false); });
   }, []);
+
+  const filteredStaff = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return staff;
+
+    return staff.filter((member) => {
+      return (
+        member.name.toLowerCase().includes(term) ||
+        member.email.toLowerCase().includes(term) ||
+        member.role.toLowerCase().includes(term)
+      );
+    });
+  }, [search, staff]);
 
   const openAdd = () => {
     setForm({ name: "", email: "", role: "CASHIER", password: "" });
@@ -54,7 +70,7 @@ export function StaffManager() {
     setError(null);
     try {
       if (editMember) {
-        const body: any = { name: form.name, role: form.role };
+        const body: { name: string; role: StaffRole; password?: string } = { name: form.name, role: form.role };
         if (form.password) body.password = form.password;
         const res = await fetch(`/api/staff/${editMember.id}`, {
           method: "PATCH", headers: { "Content-Type": "application/json" },
@@ -99,8 +115,35 @@ export function StaffManager() {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "28px" }}>
         <div>
           <h1 style={{ margin: 0, fontSize: "26px", fontWeight: "800" }}>Staff Management</h1>
+          <div style={{ marginTop: "12px", display: "flex", gap: "8px", alignItems: "center" }}>
+            <input
+              id="staff-search"
+              type="text"
+              value={search}
+              placeholder="Search by name, email, or role"
+              onChange={(e) => setSearch(e.target.value)}
+              style={{ minWidth: "320px" }}
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                style={{
+                  padding: "9px 12px",
+                  borderRadius: "10px",
+                  background: "var(--color-bg-overlay)",
+                  border: "1px solid var(--color-border)",
+                  color: "var(--color-text-muted)",
+                  fontSize: "13px",
+                }}
+              >
+                Clear
+              </button>
+            )}
+          </div>
           <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
             {staff.filter((s) => s.isActive).length} active members
+            {search ? ` · showing ${filteredStaff.length} result${filteredStaff.length === 1 ? "" : "s"}` : ""}
           </p>
         </div>
         <button
@@ -148,7 +191,14 @@ export function StaffManager() {
             {loading && (
               <tr><td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "var(--color-text-faint)" }}>Loading...</td></tr>
             )}
-            {staff.map((m) => {
+            {!loading && filteredStaff.length === 0 && (
+              <tr>
+                <td colSpan={6} style={{ padding: "40px", textAlign: "center", color: "var(--color-text-faint)" }}>
+                  No staff members match your search.
+                </td>
+              </tr>
+            )}
+            {filteredStaff.map((m) => {
               const cfg = ROLE_CONFIG[m.role];
               const Icon = cfg.icon;
               return (
@@ -222,7 +272,7 @@ export function StaffManager() {
               )}
               <div>
                 <label>Role *</label>
-                <select id="staff-role" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as any }))}>
+                <select id="staff-role" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as StaffRole }))}>
                   <option value="CASHIER">Cashier</option>
                   <option value="KITCHEN">Kitchen</option>
                   <option value="ADMIN">Admin</option>

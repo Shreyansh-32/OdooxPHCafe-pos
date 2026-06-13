@@ -20,20 +20,29 @@ export async function rateLimit(
   const now = Date.now();
   const windowStart = now - windowMs;
 
-  const pipeline = redis.pipeline();
-  pipeline.zremrangebyscore(key, 0, windowStart);
-  pipeline.zadd(key, now, `${now}-${Math.random()}`);
-  pipeline.zcard(key);
-  pipeline.pexpire(key, windowMs);
+  try {
+    const pipeline = redis.pipeline();
+    pipeline.zremrangebyscore(key, 0, windowStart);
+    pipeline.zadd(key, now, `${now}-${Math.random()}`);
+    pipeline.zcard(key);
+    pipeline.pexpire(key, windowMs);
 
-  const results = await pipeline.exec();
-  const count = (results?.[2]?.[1] as number) ?? 0;
+    const results = await pipeline.exec();
+    const count = (results?.[2]?.[1] as number) ?? 0;
 
-  return {
-    success: count <= limit,
-    remaining: Math.max(0, limit - count),
-    reset: now + windowMs,
-  };
+    return {
+      success: count <= limit,
+      remaining: Math.max(0, limit - count),
+      reset: now + windowMs,
+    };
+  } catch (err) {
+    console.warn(`[RateLimit] Redis failed for ${key}, allowing request.`);
+    return {
+      success: true,
+      remaining: limit,
+      reset: now + windowMs,
+    };
+  }
 }
 
 /**

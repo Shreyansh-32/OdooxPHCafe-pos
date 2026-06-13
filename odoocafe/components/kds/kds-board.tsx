@@ -90,39 +90,43 @@ export function KDSBoard() {
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [filter, setFilter] = useState<"ALL" | KDSStatus>("ALL");
+  const [recentlyCompletedItems, setRecentlyCompletedItems] = useState<Record<string, number>>({});
   const { socket, isConnected } = useSocket();
   const audioRef = useRef<AudioContext | null>(null);
   const completionTimersRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const removeTicket = useCallback((orderId: string) => {
-    setTickets((prev) => prev.filter((ticket) => ticket.orderId !== orderId));
-  }, []);
-
-  const scheduleTicketRemoval = useCallback((orderId: string) => {
-    const existingTimer = completionTimersRef.current[orderId];
+  const scheduleCompletedItemVisibility = useCallback((itemId: string) => {
+    const existingTimer = completionTimersRef.current[itemId];
     if (existingTimer) {
       clearTimeout(existingTimer);
     }
 
-    completionTimersRef.current[orderId] = setTimeout(() => {
-      removeTicket(orderId);
-      delete completionTimersRef.current[orderId];
-    }, 5000);
-  }, [removeTicket]);
+    setRecentlyCompletedItems((prev) => ({ ...prev, [itemId]: Date.now() }));
 
-  const cancelTicketRemoval = useCallback((orderId: string) => {
-    const existingTimer = completionTimersRef.current[orderId];
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-      delete completionTimersRef.current[orderId];
-    }
+    completionTimersRef.current[itemId] = setTimeout(() => {
+      setRecentlyCompletedItems((prev) => {
+        const next = { ...prev };
+        delete next[itemId];
+        return next;
+      });
+      delete completionTimersRef.current[itemId];
+    }, 3000);
   }, []);
 
-  const scheduleCompletedTickets = useCallback((ticket: KDSTicket) => {
-    if (ticket.items.length > 0 && ticket.items.every((item) => item.kdsStatus === "COMPLETED")) {
-      scheduleTicketRemoval(ticket.orderId);
+  const clearCompletedItemVisibility = useCallback((itemId: string) => {
+    const existingTimer = completionTimersRef.current[itemId];
+    if (existingTimer) {
+      clearTimeout(existingTimer);
+      delete completionTimersRef.current[itemId];
     }
-  }, [scheduleTicketRemoval]);
+
+    setRecentlyCompletedItems((prev) => {
+      if (!(itemId in prev)) return prev;
+      const next = { ...prev };
+      delete next[itemId];
+      return next;
+    });
+  }, []);
 
   const playChime = useCallback(() => {
     if (!soundEnabled) return;
@@ -162,12 +166,11 @@ export function KDSBoard() {
           })),
         }));
         setTickets(mapped);
-        mapped.forEach((ticket) => scheduleCompletedTickets(ticket));
       }
     } finally {
       setLoading(false);
     }
-  }, [scheduleCompletedTickets]);
+  }, []);
 
   useEffect(() => {
     fetchTickets();
@@ -190,29 +193,38 @@ export function KDSBoard() {
 
     socket.on(SOCKET_EVENTS.KDS_ITEM_UPDATED, (payload: { orderId: string; itemId: string; kdsStatus: KDSStatus }) => {
       setTickets((prev) =>
-        prev.map((ticket) => {
-          if (ticket.orderId !== payload.orderId) return ticket;
-
-          const updatedTicket = {
-            ...ticket,
-            items: ticket.items.map((item) =>
-              item.id === payload.itemId ? { ...item, kdsStatus: payload.kdsStatus } : item
-            ),
-          };
-
-          if (updatedTicket.items.length > 0 && updatedTicket.items.every((item) => item.kdsStatus === "COMPLETED")) {
-            scheduleTicketRemoval(updatedTicket.orderId);
-          } else {
-            cancelTicketRemoval(updatedTicket.orderId);
-          }
-
-          return updatedTicket;
-        })
+        prev.map((ticket) =>
+          ticket.orderId !== payload.orderId
+            ? ticket
+            : {
+                ...ticket,
+                items: ticket.items.map((item) =>
+                  item.id === payload.itemId ? { ...item, kdsStatus: payload.kdsStatus } : item
+                ),
+              }
+        )
       );
+
+      if (payload.kdsStatus === "COMPLETED") {
+        scheduleCompletedItemVisibility(payload.itemId);
+      } else {
+        clearCompletedItemVisibility(payload.itemId);
+      }
     });
 
     socket.on(SOCKET_EVENTS.KDS_ORDER_COMPLETE, (payload: { orderId: string }) => {
-      scheduleTicketRemoval(payload.orderId);
+      setTickets((prev) => {
+        const ticket = prev.find((t) => t.orderId === payload.orderId);
+        if (!ticket) return prev;
+
+        ticket.items.forEach((item) => {
+          if (item.kdsStatus === "COMPLETED") {
+            scheduleCompletedItemVisibility(item.id);
+          }
+        });
+
+        return prev;
+      });
     });
 
     return () => {
@@ -220,7 +232,7 @@ export function KDSBoard() {
       socket.off(SOCKET_EVENTS.KDS_ITEM_UPDATED);
       socket.off(SOCKET_EVENTS.KDS_ORDER_COMPLETE);
     };
-  }, [socket, playChime, scheduleTicketRemoval, cancelTicketRemoval]);
+  }, [socket, playChime, scheduleCompletedItemVisibility, clearCompletedItemVisibility]);
 
   useEffect(() => {
     return () => {
@@ -251,8 +263,13 @@ export function KDSBoard() {
   };
 
   const visibleTickets = tickets.filter((t) => {
-    if (filter === "ALL") return true;
-    return t.items.some((i) => i.kdsStatus === filter);
+    const hasVisibleItems = t.items.some(
+      (i) => i.kdsStatus !== "COMPLETED" || i.id in recentlyCompletedItems
+    );
+    if (filter === "ALL") return hasVisibleItems;
+    return t.items.some(
+      (i) => i.kdsStatus === filter && (i.kdsStatus !== "COMPLETED" || i.id in recentlyCompletedItems)
+    );
   });
 
   return (
@@ -382,7 +399,10 @@ export function KDSBoard() {
         )}
 
         {visibleTickets.map((ticket) => {
-          const allDone = ticket.items.length > 0 && ticket.items.every((i) => i.kdsStatus === "COMPLETED");
+          const visibleItems = ticket.items.filter(
+            (item) => item.kdsStatus !== "COMPLETED" || item.id in recentlyCompletedItems
+          );
+          const allDone = visibleItems.length > 0 && visibleItems.every((i) => i.kdsStatus === "COMPLETED");
           return (
             <div
               key={ticket.orderId}
@@ -452,7 +472,7 @@ export function KDSBoard() {
 
               {/* Items */}
               <div style={{ padding: "10px" }}>
-                {ticket.items.map((item) => {
+                {visibleItems.map((item) => {
                   const statusStyle = STATUS_COLORS[item.kdsStatus];
                   const canAdvance = NEXT_STATUS[item.kdsStatus] !== null;
                   return (
