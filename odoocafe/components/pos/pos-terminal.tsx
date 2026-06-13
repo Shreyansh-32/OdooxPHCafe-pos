@@ -377,6 +377,15 @@ export function POSTerminal() {
     }
   };
 
+  const changeTable = (newTableId: string) => {
+    if (selectedTableId !== newTableId) {
+      clearCart();
+    }
+    setSelectedTableId(newTableId);
+    setIsTableModalOpen(false);
+    setStep("MENU");
+  };
+
   const selectedTable = tables.find((t) => t.id === selectedTableId);
   const hasActiveOrders = selectedTable && selectedTable.orders && selectedTable.orders.length > 0;
 
@@ -473,11 +482,7 @@ export function POSTerminal() {
                       tables={floorTables}
                       isOpen={isOpen}
                       onToggle={() => setSelectedFloorId(isOpen ? null : floor.id)}
-                      onSelectTable={(tableId) => {
-                        setSelectedTableId(tableId);
-                        setIsTableModalOpen(false);
-                        setStep("MENU");
-                      }}
+                      onSelectTable={changeTable}
                       selectedTableId={selectedTableId}
                       handleFreeTable={handleFreeTable}
                       isFreeing={isFreeing}
@@ -568,10 +573,7 @@ export function POSTerminal() {
               Quick Service
             </h3>
             <button
-              onClick={() => {
-                setSelectedTableId("");
-                setStep("MENU");
-              }}
+              onClick={() => changeTable("")}
               style={{
                 width: "100%",
                 maxWidth: "320px",
