@@ -167,6 +167,39 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
             </form>
           )}
         </div>
+
+        {/* Not a Customer Button */}
+        <div style={{ marginTop: "20px", textAlign: "center" }}>
+          <a
+            href="http://localhost:3000/login"
+            id="not-a-customer-btn"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "10px 20px",
+              borderRadius: "10px",
+              background: "rgba(255, 255, 255, 0.03)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              color: "#8a8a9a",
+              textDecoration: "none",
+              fontSize: "13px",
+              fontWeight: "600",
+              cursor: "pointer",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+              e.currentTarget.style.color = "#f0eee8";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.03)";
+              e.currentTarget.style.color = "#8a8a9a";
+            }}
+          >
+            Not a Customer?
+          </a>
+        </div>
       </div>
     </div>
   );
