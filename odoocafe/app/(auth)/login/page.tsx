@@ -16,10 +16,16 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<StaffLoginInput>({
     resolver: zodResolver(staffLoginSchema),
   });
+
+  const fillCredentials = (email: string, pass: string) => {
+    setValue("email", email, { shouldValidate: true });
+    setValue("password", pass, { shouldValidate: true });
+  };
 
   const onSubmit = async (data: StaffLoginInput) => {
     setLoading(true);
@@ -181,27 +187,44 @@ export default function LoginPage() {
             border: "1px solid rgba(42, 42, 58, 0.5)",
           }}
         >
-          <p style={{ fontSize: "12px", color: "#8a8a9a", margin: "0 0 8px", fontWeight: "600" }}>
-            Demo Credentials
+          <p style={{ fontSize: "12px", color: "#8a8a9a", margin: "0 0 12px", fontWeight: "600", textAlign: "center" }}>
+            Quick Demo Login
           </p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             {[
               { role: "Admin", email: "admin@cafeodoo.com", pass: "admin123" },
               { role: "Cashier", email: "cashier@cafeodoo.com", pass: "cashier123" },
               { role: "Kitchen", email: "kitchen@cafeodoo.com", pass: "kitchen123" },
             ].map((cred) => (
-              <div
+              <button
                 key={cred.role}
+                type="button"
+                id={`demo-btn-${cred.role.toLowerCase()}`}
+                onClick={() => fillCredentials(cred.email, cred.pass)}
                 style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  fontSize: "11px",
-                  color: "#5a5a6a",
+                  flex: 1,
+                  padding: "8px 4px",
+                  borderRadius: "8px",
+                  border: "1px solid rgba(200, 121, 65, 0.2)",
+                  background: "rgba(200, 121, 65, 0.08)",
+                  color: "#c87941",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  textAlign: "center",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(200, 121, 65, 0.15)";
+                  e.currentTarget.style.borderColor = "rgba(200, 121, 65, 0.4)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(200, 121, 65, 0.08)";
+                  e.currentTarget.style.borderColor = "rgba(200, 121, 65, 0.2)";
                 }}
               >
-                <span style={{ color: "#c87941", fontWeight: "500" }}>{cred.role}:</span>
-                <span>{cred.email} / {cred.pass}</span>
-              </div>
+                {cred.role}
+              </button>
             ))}
           </div>
         </div>
