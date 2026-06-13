@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -37,7 +37,10 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/pos");
+    const session = await getSession();
+    const destination = session?.user?.role === "KITCHEN" ? "/kds" : "/pos";
+
+    router.push(destination);
     router.refresh();
   };
 
