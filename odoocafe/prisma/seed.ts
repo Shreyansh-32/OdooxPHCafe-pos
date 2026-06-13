@@ -287,6 +287,34 @@ async function main() {
 
   console.log("\n✅ Promotions: WELCOME10 (10% off), FLAT50 (₹50 off)");
 
+  // =====================
+  // CUSTOMERS
+  // =====================
+  const customerPassword = await bcrypt.hash("customer123", 12);
+  const sampleCustomers = [
+    { id: "cust-1", name: "Aarav Mehta", email: "aarav@gmail.com", phone: "9876543210" },
+    { id: "cust-2", name: "Ishaan Sharma", email: "ishaan@gmail.com", phone: "9876543211" },
+    { id: "cust-3", name: "Ananya Iyer", email: "ananya@gmail.com", phone: "9876543212" },
+    { id: "cust-4", name: "Dia Sen", email: "dia@gmail.com", phone: "9876543213" },
+    { id: "cust-5", name: "Kabir Roy", email: "kabir@gmail.com", phone: "9876543214" }
+  ];
+
+  for (const cust of sampleCustomers) {
+    await prisma.customer.upsert({
+      where: { email: cust.email },
+      update: {},
+      create: {
+        id: cust.id,
+        name: cust.name,
+        email: cust.email,
+        phone: cust.phone,
+        password: customerPassword,
+        isVerified: true
+      }
+    });
+  }
+  console.log(`✅ Customers created: ${sampleCustomers.length} sample customers`);
+
   console.log("\n🎉 Seed complete! CafePOS is ready.\n");
   console.log("📋 Login credentials:");
   console.log("   Admin:   admin@cafeodoo.com    / admin123");

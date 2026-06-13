@@ -3,9 +3,31 @@
 import { useState, useEffect } from "react";
 import { useCartStore } from "@/store/cart";
 import { formatCurrency } from "@/lib/utils";
-import { Search, ShoppingCart, Plus, Minus, Trash2, Send, CreditCard, Wifi, WifiOff } from "lucide-react";
+import {
+  Search,
+  ShoppingCart,
+  Plus,
+  Minus,
+  Trash2,
+  Send,
+  CreditCard,
+  Wifi,
+  WifiOff,
+  ChevronDown,
+  ChevronRight,
+  X,
+  Layers,
+  Users,
+  MapPin,
+  ShoppingBag,
+  ArrowLeft,
+  Check
+} from "lucide-react";
 import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
+import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import Image from "next/image";
 
 interface Product {
   id: string;
@@ -24,16 +46,188 @@ interface Category {
   color: string;
 }
 
+interface Floor {
+  id: string;
+  name: string;
+  sortOrder: number;
+  _count?: { tables: number };
+}
+
+interface Table {
+  id: string;
+  tableNumber: string;
+  seats: number;
+  isActive: boolean;
+  floorId: string;
+  floor?: { id: string; name: string };
+  orders?: { id: string; status: string; grandTotal: number }[];
+}
+
+function CollapsibleFloor({
+  floor,
+  tables,
+  isOpen,
+  onToggle,
+  onSelectTable,
+  selectedTableId,
+}: {
+  floor: Floor;
+  tables: Table[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelectTable: (tableId: string) => void;
+  selectedTableId: string;
+}) {
+  return (
+    <div style={{ borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
+      <button
+        onClick={onToggle}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "var(--color-bg-overlay)",
+          border: "none",
+          textAlign: "left",
+          borderRadius: "8px",
+          color: "var(--color-text)",
+          cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Layers size={16} color="var(--color-primary)" />
+          <span style={{ fontWeight: "600", fontSize: "15px" }}>{floor.name}</span>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+            ({tables.length} tables)
+          </span>
+        </div>
+        <div>
+          {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div
+              style={{
+                padding: "16px 8px",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                gap: "10px",
+              }}
+            >
+              {tables.map((table) => {
+                const hasActiveOrder = !!(table.orders && table.orders.length > 0);
+                const activeOrder = table.orders?.[0] || null;
+                const isSelected = selectedTableId === table.id;
+
+                return (
+                  <button
+                    key={table.id}
+                    onClick={() => onSelectTable(table.id)}
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "8px",
+                      border: isSelected
+                        ? "2px solid var(--color-primary)"
+                        : "1px solid var(--color-border)",
+                      background: isSelected
+                        ? "rgba(200, 121, 65, 0.1)"
+                        : "var(--color-bg-elevated)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "4px",
+                      position: "relative",
+                      transition: "all 0.15s ease",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", fontWeight: "700" }}>
+                      T-{table.tableNumber}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        color: "var(--color-text-muted)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <Users size={10} /> {table.seats} seats
+                    </span>
+
+                    {/* Status Badge */}
+                    <span
+                      style={{
+                        marginTop: "6px",
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: "999px",
+                        fontWeight: "600",
+                        background: hasActiveOrder
+                          ? "rgba(245, 158, 11, 0.15)"
+                          : "rgba(34, 197, 94, 0.15)",
+                        color: hasActiveOrder ? "#f59e0b" : "#4ade80",
+                      }}
+                    >
+                      {hasActiveOrder ? "Occupied" : "Available"}
+                    </span>
+
+                    {hasActiveOrder && activeOrder && (
+                      <span style={{ fontSize: "10px", color: "var(--color-primary)", fontWeight: "600", marginTop: "2px" }}>
+                        {formatCurrency(Number(activeOrder.grandTotal))}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+              {tables.length === 0 && (
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    textAlign: "center",
+                    padding: "20px",
+                    color: "var(--color-text-faint)",
+                    fontSize: "13px",
+                  }}
+                >
+                  No active tables on this floor
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function POSTerminal() {
+  const [step, setStep] = useState<"TABLE_SELECTION" | "MENU">("TABLE_SELECTION");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [paymentMethods, setPaymentMethods] = useState<{ id: string; name: string; type: string }[]>([]);
-  const [tables, setTables] = useState<{ id: string; tableNumber: string }[]>([]);
+  const [tables, setTables] = useState<Table[]>([]);
+  const [floors, setFloors] = useState<Floor[]>([]);
+  const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
+  const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string>("");
 
   const { items, addItem, removeItem, updateQuantity, clearCart, subtotal, taxTotal, grandTotal, totalItems } = useCartStore();
@@ -45,10 +239,12 @@ export function POSTerminal() {
       fetch("/api/categories").then((r) => r.json()),
       fetch("/api/sessions").then((r) => r.json()),
       fetch("/api/tables").then((r) => r.json()),
-    ]).then(([prod, cat, sess, tbls]) => {
+      fetch("/api/floors").then((r) => r.json()),
+    ]).then(([prod, cat, sess, tbls, flrs]) => {
       setProducts(prod.data || []);
       setCategories(cat.data || []);
       setTables(tbls.data || []);
+      setFloors(flrs.data || []);
     });
 
     // Fetch payment methods
@@ -62,6 +258,38 @@ export function POSTerminal() {
       ]);
     });
   }, []);
+
+  // Real-time updates for table occupancy status
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.emit(SOCKET_EVENTS.JOIN_CASHIER);
+
+    const handleRefresh = async () => {
+      try {
+        const tblsRes = await fetch("/api/tables");
+        const tblsData = await tblsRes.json();
+        if (tblsData.ok) {
+          setTables(tblsData.data || []);
+        }
+      } catch (err) {
+        console.error("Failed to refresh tables:", err);
+      }
+    };
+
+    socket.on(SOCKET_EVENTS.ORDER_STATUS, handleRefresh);
+    socket.on(SOCKET_EVENTS.ORDER_PLACED, handleRefresh);
+    socket.on(SOCKET_EVENTS.PAYMENT_RECEIVED, handleRefresh);
+    socket.on(SOCKET_EVENTS.KDS_ORDER_COMPLETE, handleRefresh);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.ORDER_STATUS, handleRefresh);
+      socket.off(SOCKET_EVENTS.ORDER_PLACED, handleRefresh);
+      socket.off(SOCKET_EVENTS.PAYMENT_RECEIVED, handleRefresh);
+      socket.off(SOCKET_EVENTS.KDS_ORDER_COMPLETE, handleRefresh);
+    };
+  }, [socket]);
+
 
   const filteredProducts = products.filter((p) => {
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
@@ -113,16 +341,332 @@ export function POSTerminal() {
         body: JSON.stringify({ status: "SENT" }),
       });
 
-      setActiveOrderId(orderId);
       clearCart();
       setSelectedTableId("");
+      toast.success("Order sent to kitchen!");
+      setStep("TABLE_SELECTION");
     } catch (err) {
       console.error(err);
+      toast.error("Failed to send order");
     }
 
     setIsSubmitting(false);
   };
 
+  const selectedTable = tables.find((t) => t.id === selectedTableId);
+
+  // Render modal for table selection
+  const renderTableModal = () => {
+    return (
+      <AnimatePresence>
+        {isTableModalOpen && (
+          <div
+            style={{
+              position: "fixed",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: "rgba(0, 0, 0, 0.75)",
+              backdropFilter: "blur(4px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 1000,
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              style={{
+                width: "90%",
+                maxWidth: "600px",
+                maxHeight: "80vh",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "16px",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                overflow: "hidden",
+                boxShadow: "var(--shadow-lg)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "20px",
+                  borderBottom: "1px solid var(--color-border)",
+                  paddingBottom: "12px",
+                }}
+              >
+                <div>
+                  <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
+                    Select Table
+                  </h3>
+                  <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--color-text-muted)" }}>
+                    Choose a table to begin taking order items.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsTableModalOpen(false)}
+                  style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "var(--color-text-muted)",
+                    padding: "6px",
+                    borderRadius: "50%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    cursor: "pointer",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--color-bg-overlay)";
+                    e.currentTarget.style.color = "var(--color-text)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "var(--color-text-muted)";
+                  }}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}>
+                {floors.map((floor) => {
+                  const floorTables = tables.filter((t) => t.floorId === floor.id);
+                  const isOpen = selectedFloorId === floor.id;
+                  return (
+                    <CollapsibleFloor
+                      key={floor.id}
+                      floor={floor}
+                      tables={floorTables}
+                      isOpen={isOpen}
+                      onToggle={() => setSelectedFloorId(isOpen ? null : floor.id)}
+                      onSelectTable={(tableId) => {
+                        setSelectedTableId(tableId);
+                        setIsTableModalOpen(false);
+                        setStep("MENU");
+                      }}
+                      selectedTableId={selectedTableId}
+                    />
+                  );
+                })}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    );
+  };
+
+  if (step === "TABLE_SELECTION") {
+    return (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          background: "var(--color-bg)",
+          color: "var(--color-text)",
+          padding: "24px",
+          overflowY: "auto",
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            maxWidth: "1000px",
+            width: "100%",
+            margin: "0 auto 32px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <div>
+            <h1
+              style={{
+                margin: 0,
+                fontSize: "28px",
+                fontWeight: "800",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+              }}
+            >
+              ☕ <span className="gradient-text">CafePOS Terminal</span>
+            </h1>
+            <p style={{ margin: "4px 0 0", color: "var(--color-text-muted)", fontSize: "14px" }}>
+              Select a floor layout to view tables or place a direct counter order.
+            </p>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontSize: "13px",
+              fontWeight: "600",
+              color: isConnected ? "#22c55e" : "#ef4444",
+              background: isConnected ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+              padding: "4px 12px",
+              borderRadius: "999px",
+            }}
+          >
+            {isConnected ? <Wifi size={14} /> : <WifiOff size={14} />}
+            {isConnected ? "Live" : "Offline"}
+          </div>
+        </div>
+
+        {/* Dashboard Content */}
+        <div
+          style={{
+            maxWidth: "1000px",
+            width: "100%",
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            gap: "32px",
+          }}
+        >
+          {/* Quick Actions (Takeaway) */}
+          <div>
+            <h3 style={{ fontSize: "16px", color: "var(--color-text-muted)", marginBottom: "12px", fontWeight: "600" }}>
+              Quick Service
+            </h3>
+            <button
+              onClick={() => {
+                setSelectedTableId("");
+                setStep("MENU");
+              }}
+              style={{
+                width: "100%",
+                maxWidth: "320px",
+                background: "linear-gradient(135deg, var(--color-espresso), var(--color-bg-elevated))",
+                border: "1px solid var(--color-primary)",
+                borderRadius: "16px",
+                padding: "24px",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-start",
+                gap: "8px",
+                textAlign: "left",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-glow)",
+              }}
+            >
+              <div
+                style={{
+                  width: "42px",
+                  height: "42px",
+                  borderRadius: "12px",
+                  background: "var(--color-primary)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "#fff",
+                }}
+              >
+                <ShoppingBag size={20} />
+              </div>
+              <div style={{ marginTop: "12px" }}>
+                <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--color-text)" }}>
+                  Takeaway / Quick Order
+                </span>
+                <p style={{ margin: "4px 0 0", fontSize: "13px", color: "var(--color-text-muted)" }}>
+                  Create direct counter order without assigning a table.
+                </p>
+              </div>
+            </button>
+          </div>
+
+          {/* Floors Section */}
+          <div>
+            <h3 style={{ fontSize: "16px", color: "var(--color-text-muted)", marginBottom: "16px", fontWeight: "600" }}>
+              Floor Layouts
+            </h3>
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "20px",
+              }}
+            >
+              {floors.map((floor) => {
+                const floorTables = tables.filter((t) => t.floorId === floor.id);
+                const occupiedCount = floorTables.filter((t) => t.orders && t.orders.length > 0).length;
+
+                return (
+                  <button
+                    key={floor.id}
+                    onClick={() => {
+                      setSelectedFloorId(floor.id);
+                      setIsTableModalOpen(true);
+                    }}
+                    style={{
+                      background: "var(--color-bg-elevated)",
+                      border: "1px solid var(--color-border)",
+                      borderRadius: "16px",
+                      padding: "24px",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: "12px",
+                      textAlign: "left",
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: "42px",
+                        height: "42px",
+                        borderRadius: "12px",
+                        background: "rgba(200, 121, 65, 0.1)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--color-primary)",
+                      }}
+                    >
+                      <Layers size={20} />
+                    </div>
+                    <div>
+                      <span style={{ fontSize: "18px", fontWeight: "700", color: "var(--color-text)" }}>
+                        {floor.name}
+                      </span>
+                      <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                        <span style={{ fontSize: "13px", color: "var(--color-text-muted)", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Users size={12} /> {floorTables.length} Tables
+                        </span>
+                        {occupiedCount > 0 && (
+                          <span style={{ fontSize: "13px", color: "var(--color-warning)", fontWeight: "600" }}>
+                            {occupiedCount} Occupied
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Overlay rendered here */}
+        {renderTableModal()}
+
+      </div>
+    );
+  }
+
+  // Otherwise, render MENU view
   return (
     <div
       style={{
@@ -153,9 +697,12 @@ export function POSTerminal() {
             gap: "12px",
           }}
         >
-          <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
-            ☕ Menu
-          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <Image src="/CafePOS.png" alt="CafePOS Logo" width={28} height={28} style={{ objectFit: "contain" }} />
+            <h2 style={{ margin: 0, fontSize: "18px", fontWeight: "700" }}>
+              Menu
+            </h2>
+          </div>
           <div
             style={{
               display: "flex",
@@ -169,6 +716,45 @@ export function POSTerminal() {
             {isConnected ? <Wifi size={12} /> : <WifiOff size={12} />}
             {isConnected ? "Live" : "Offline"}
           </div>
+        </div>
+
+        {/* Table Banner */}
+        <div
+          style={{
+            padding: "10px 16px",
+            background: "var(--color-bg-overlay)",
+            borderBottom: "1px solid var(--color-border-muted)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontSize: "13px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "6px", fontWeight: "600", color: "var(--color-text)" }}>
+            <MapPin size={14} color="var(--color-primary)" />
+            {selectedTableId && selectedTable ? (
+              <span>
+                Table {selectedTable.tableNumber} ({selectedTable.floor?.name || "Floor"})
+              </span>
+            ) : (
+              <span>Takeaway / Quick Order</span>
+            )}
+          </div>
+          <button
+            onClick={() => setStep("TABLE_SELECTION")}
+            style={{
+              padding: "4px 10px",
+              fontSize: "12px",
+              background: "var(--color-bg-elevated)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "6px",
+              color: "var(--color-primary)",
+              fontWeight: "600",
+              cursor: "pointer",
+            }}
+          >
+            Switch Table
+          </button>
         </div>
 
         {/* Search */}
@@ -218,6 +804,7 @@ export function POSTerminal() {
               fontWeight: "500",
               flexShrink: 0,
               border: "1px solid transparent",
+              cursor: "pointer",
             }}
           >
             All
@@ -240,6 +827,7 @@ export function POSTerminal() {
                 fontSize: "13px",
                 fontWeight: "500",
                 flexShrink: 0,
+                cursor: "pointer",
               }}
             >
               {cat.name}
@@ -266,7 +854,7 @@ export function POSTerminal() {
               onClick={() => handleAddProduct(product)}
               style={{
                 background: "var(--color-bg-elevated)",
-                border: "1px solid var(--color-border)",
+                border: `1px solid ${product.category.color ? product.category.color + "33" : "var(--color-border)"}`,
                 borderRadius: "12px",
                 padding: "16px 14px",
                 display: "flex",
@@ -276,14 +864,15 @@ export function POSTerminal() {
                 cursor: "pointer",
                 transition: "all 0.15s",
                 position: "relative",
+                width: "100%",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-primary)";
+                e.currentTarget.style.borderColor = product.category.color || "var(--color-primary)";
                 e.currentTarget.style.background = "var(--color-bg-overlay)";
                 e.currentTarget.style.transform = "translateY(-2px)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = "var(--color-border)";
+                e.currentTarget.style.borderColor = product.category.color ? product.category.color + "33" : "var(--color-border)";
                 e.currentTarget.style.background = "var(--color-bg-elevated)";
                 e.currentTarget.style.transform = "translateY(0)";
               }}
@@ -291,7 +880,7 @@ export function POSTerminal() {
               <div
                 style={{
                   fontSize: "11px",
-                  color: product.category.color || "var(--color-primary)",
+                  color: "var(--color-text-muted)",
                   fontWeight: "600",
                   letterSpacing: "0.05em",
                 }}
@@ -312,7 +901,7 @@ export function POSTerminal() {
                 style={{
                   fontSize: "15px",
                   fontWeight: "700",
-                  color: "var(--color-primary)",
+                  color: product.category.color || "var(--color-primary)",
                   marginTop: "4px",
                 }}
               >
@@ -326,7 +915,7 @@ export function POSTerminal() {
                   width: "22px",
                   height: "22px",
                   borderRadius: "50%",
-                  background: "var(--color-primary)",
+                  background: product.category.color || "var(--color-primary)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -394,26 +983,24 @@ export function POSTerminal() {
           )}
         </div>
 
-        {/* Table Selection */}
-        <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--color-border-muted)" }}>
-          <select
-            value={selectedTableId}
-            onChange={(e) => setSelectedTableId(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "8px 12px",
-              borderRadius: "8px",
-              background: "var(--color-bg-overlay)",
-              border: "1px solid var(--color-border-muted)",
-              color: "var(--color-text)",
-              fontSize: "13px",
-            }}
-          >
-            <option value="">No Table (Takeaway/Counter)</option>
-            {tables.map(t => (
-              <option key={t.id} value={t.id}>Table {t.tableNumber}</option>
-            ))}
-          </select>
+        {/* Table Selection - Read Only display */}
+        <div
+          style={{
+            padding: "12px 16px",
+            borderBottom: "1px solid var(--color-border-muted)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            fontSize: "13px",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          <span>Serving Target:</span>
+          <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
+            {selectedTableId && selectedTable
+              ? `Table ${selectedTable.tableNumber}`
+              : "Takeaway / Counter"}
+          </span>
         </div>
 
         {/* Cart Items */}
@@ -457,6 +1044,7 @@ export function POSTerminal() {
                         background: "transparent",
                         color: "var(--color-text-faint)",
                         borderRadius: "4px",
+                        cursor: "pointer",
                       }}
                     >
                       <Trash2 size={13} />
@@ -477,6 +1065,7 @@ export function POSTerminal() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          cursor: "pointer",
                         }}
                       >
                         <Minus size={12} />
@@ -496,6 +1085,7 @@ export function POSTerminal() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
+                          cursor: "pointer",
                         }}
                       >
                         <Plus size={12} color="#fff" />
@@ -562,6 +1152,8 @@ export function POSTerminal() {
                   fontWeight: "700",
                   fontSize: "15px",
                   boxShadow: "0 4px 16px rgba(200, 121, 65, 0.3)",
+                  cursor: "pointer",
+                  width: "100%",
                 }}
               >
                 <Send size={16} />
@@ -569,7 +1161,11 @@ export function POSTerminal() {
               </button>
               <button
                 id="clear-cart-btn"
-                onClick={() => clearCart()}
+                onClick={() => {
+                  clearCart();
+                  setSelectedTableId("");
+                  setStep("TABLE_SELECTION");
+                }}
                 style={{
                   background: "transparent",
                   color: "var(--color-text-faint)",
@@ -577,6 +1173,8 @@ export function POSTerminal() {
                   justifyContent: "center",
                   fontSize: "13px",
                   border: "1px solid var(--color-border-muted)",
+                  cursor: "pointer",
+                  width: "100%",
                 }}
               >
                 Clear Order
@@ -585,27 +1183,6 @@ export function POSTerminal() {
           </div>
         )}
 
-        {/* Success message */}
-        {activeOrderId && (
-          <div
-            style={{
-              position: "fixed",
-              bottom: "24px",
-              right: "24px",
-              background: "rgba(34, 197, 94, 0.15)",
-              border: "1px solid rgba(34, 197, 94, 0.3)",
-              borderRadius: "12px",
-              padding: "16px 20px",
-              color: "#4ade80",
-              fontSize: "14px",
-              fontWeight: "600",
-              animation: "fadeIn 0.3s ease",
-              zIndex: 100,
-            }}
-          >
-            ✓ Order sent to kitchen!
-          </div>
-        )}
       </div>
     </div>
   );
