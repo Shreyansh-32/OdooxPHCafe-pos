@@ -5,6 +5,8 @@ export const createOrderSchema = z.object({
   source: z.enum(["CASHIER", "CUSTOMER"]).default("CASHIER"),
   customerNote: z.string().optional(),
   sessionId: z.string().optional(),
+  promotionId: z.string().optional(),
+  discountTotal: z.number().min(0).optional(),
 });
 
 export const addOrderItemSchema = z.object({

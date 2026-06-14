@@ -95,7 +95,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
   }
 
-  // Recalculate order totals
+  // Recalculate order totals (preserve existing discountTotal)
   const allItems = await prisma.orderItem.findMany({
     where: { orderId: id },
     include: { product: true },
@@ -106,10 +106,12 @@ export async function POST(request: Request, { params }: RouteParams) {
     (sum, i) => sum + Number(i.lineTotal) * (Number(i.product.taxRate) / 100),
     0
   );
+  const discountTotal = Number(order.discountTotal) || 0;
+  const grandTotal = Math.max(0, subtotal + taxTotal - discountTotal);
 
   const updatedOrder = await prisma.order.update({
     where: { id },
-    data: { subtotal, taxTotal, grandTotal: subtotal + taxTotal },
+    data: { subtotal, taxTotal, grandTotal },
   });
 
   // Emit update
@@ -149,7 +151,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
   await prisma.orderItem.delete({ where: { id: itemId, orderId: id } });
 
-  // Recalculate totals
+  // Recalculate totals (preserve existing discountTotal)
   const allItems = await prisma.orderItem.findMany({
     where: { orderId: id },
     include: { product: true },
@@ -160,10 +162,13 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     (sum, i) => sum + Number(i.lineTotal) * (Number(i.product.taxRate) / 100),
     0
   );
+  const currentOrder = await prisma.order.findUnique({ where: { id } });
+  const discountTotal = Number(currentOrder?.discountTotal) || 0;
+  const grandTotal = Math.max(0, subtotal + taxTotal - discountTotal);
 
   const updatedOrder = await prisma.order.update({
     where: { id },
-    data: { subtotal, taxTotal, grandTotal: subtotal + taxTotal },
+    data: { subtotal, taxTotal, grandTotal },
   });
 
   const io = getIO();

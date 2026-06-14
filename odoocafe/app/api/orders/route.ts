@@ -90,7 +90,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { tableId, source, customerNote, sessionId } = parsed.data;
+    const { tableId, source, customerNote, sessionId, promotionId, discountTotal } = parsed.data;
 
     const isCashier = source === "CASHIER";
 
@@ -102,6 +102,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: "Customer session required" }, { status: 401 });
     }
 
+    // Validate promotion if provided
+    if (promotionId) {
+      const promo = await prisma.promotion.findUnique({ where: { id: promotionId } });
+      if (!promo || !promo.isActive) {
+        return NextResponse.json({ ok: false, error: "Invalid or expired promotion" }, { status: 400 });
+      }
+      const now = new Date();
+      if (promo.validFrom && now < promo.validFrom) {
+        return NextResponse.json({ ok: false, error: "Promotion not yet active" }, { status: 400 });
+      }
+      if (promo.validUntil && now > promo.validUntil) {
+        return NextResponse.json({ ok: false, error: "Promotion has expired" }, { status: 400 });
+      }
+      if (promo.maxUses && promo.usedCount >= promo.maxUses) {
+        return NextResponse.json({ ok: false, error: "Promotion usage limit reached" }, { status: 400 });
+      }
+    }
+
     const order = await prisma.order.create({
       data: {
         status: "DRAFT",
@@ -109,14 +127,23 @@ export async function POST(request: Request) {
         customerNote,
         subtotal: 0,
         taxTotal: 0,
-        discountTotal: 0,
+        discountTotal: discountTotal || 0,
         grandTotal: 0,
         tableId: tableId || (!isCashier ? customerSession?.tableId ?? null : null),
         userId: isCashier ? staffSession?.user.id || null : null,
         customerId: !isCashier ? customerSession?.customerId || null : null,
         sessionId: sessionId || null,
+        promotionId: promotionId || null,
       },
     });
+
+    // Increment promotion usedCount if one was applied
+    if (promotionId) {
+      await prisma.promotion.update({
+        where: { id: promotionId },
+        data: { usedCount: { increment: 1 } },
+      });
+    }
 
     // Notify admin room that a new order was created
     const io = getIO();

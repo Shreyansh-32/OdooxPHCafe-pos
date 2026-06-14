@@ -1,9 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { formatCurrency, generateRef } from "@/lib/utils";
 import { UpiQrDisplay } from "@/components/shared/upi-qr-display";
-import { QrCode, CreditCard, Loader2, ChevronLeft, AlertCircle } from "lucide-react";
+import {
+  QrCode,
+  CreditCard,
+  Loader2,
+  ChevronLeft,
+  AlertCircle,
+  Tag,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+  X,
+} from "lucide-react";
 
 declare global {
   interface Window {
@@ -19,6 +30,15 @@ interface CartItem {
   taxRate: number;
   quantity: number;
   notes?: string;
+}
+
+interface AppliedPromo {
+  id: string;
+  name: string;
+  code: string | null;
+  discountType: string;
+  discountValue: number;
+  discountAmount: number;
 }
 
 interface Props {
@@ -37,7 +57,7 @@ type PaymentTab = "upi" | "razorpay";
 export function CustomerPaymentSheet({
   tableId,
   cart,
-  grandTotal,
+  grandTotal: originalGrandTotal,
   subtotal,
   taxTotal,
   customerName,
@@ -49,6 +69,19 @@ export function CustomerPaymentSheet({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [razorpayReady, setRazorpayReady] = useState(false);
+
+  // Coupon state
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
+  const [showCouponInput, setShowCouponInput] = useState(false);
+  const [autoPromos, setAutoPromos] = useState<AppliedPromo[]>([]);
+
+  // Computed final total with discount
+  const discountAmount = appliedPromo?.discountAmount ?? 0;
+  const grandTotal = Math.max(0, originalGrandTotal - discountAmount);
 
   const sv = {
     bg: "var(--color-bg)",
@@ -86,12 +119,79 @@ export function CustomerPaymentSheet({
     script.onload = () => setRazorpayReady(true);
     script.onerror = () => setError("Failed to load Razorpay. Check your internet connection.");
     document.body.appendChild(script);
+
+    // Fetch auto-applicable promotions
+    fetch(`/api/promotions/auto?orderTotal=${originalGrandTotal}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.ok && d.data.length > 0) {
+          setAutoPromos(d.data);
+          // Auto-apply the best promotion
+          const best = d.data[0];
+          setAppliedPromo({
+            id: best.id,
+            name: best.name,
+            code: null,
+            discountType: best.discountType,
+            discountValue: best.discountValue,
+            discountAmount: best.discountAmount,
+          });
+          setCouponSuccess(`🎉 "${best.name}" automatically applied!`);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Apply promo code manually
+  const handleApplyCoupon = useCallback(async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError(null);
+    setCouponSuccess(null);
+    try {
+      const res = await fetch("/api/promotions/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: couponCode.trim().toUpperCase(), orderTotal: originalGrandTotal }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        setCouponError(data.error || "Invalid coupon code");
+        return;
+      }
+      setAppliedPromo({
+        id: data.data.id,
+        name: data.data.name,
+        code: data.data.code,
+        discountType: data.data.discountType,
+        discountValue: data.data.discountValue,
+        discountAmount: data.data.discountAmount,
+      });
+      setCouponSuccess(`✅ Coupon applied! You save ${formatCurrency(data.data.discountAmount)}`);
+      setShowCouponInput(false);
+    } catch {
+      setCouponError("Failed to validate coupon. Please try again.");
+    } finally {
+      setCouponLoading(false);
+    }
+  }, [couponCode, originalGrandTotal]);
+
+  const removePromo = () => {
+    setAppliedPromo(null);
+    setCouponCode("");
+    setCouponError(null);
+    setCouponSuccess(null);
+  };
 
   // ── Create café order + items ──
   async function createCafeOrder(): Promise<{ id: string; orderNumber: number }> {
     const orderBody: Record<string, unknown> = { source: "CUSTOMER" };
     if (tableId) orderBody.tableId = tableId;
+    if (appliedPromo) {
+      orderBody.promotionId = appliedPromo.id;
+      orderBody.discountTotal = appliedPromo.discountAmount;
+    }
 
     const orderRes = await fetch("/api/orders", {
       method: "POST",
@@ -135,7 +235,7 @@ export function CustomerPaymentSheet({
     let cafeOrderNumber: number | null = null;
 
     try {
-      // 1. Create Razorpay order
+      // 1. Create Razorpay order with discounted amount
       const rzpRes = await fetch("/api/razorpay", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -258,8 +358,15 @@ export function CustomerPaymentSheet({
             {cart.length} item{cart.length !== 1 ? "s" : ""} · {customerName}
           </div>
         </div>
-        <div style={{ marginLeft: "auto", fontSize: "20px", fontWeight: "800", color: sv.primary }}>
-          {formatCurrency(grandTotal)}
+        <div style={{ marginLeft: "auto", textAlign: "right" }}>
+          <div style={{ fontSize: "20px", fontWeight: "800", color: sv.primary }}>
+            {formatCurrency(grandTotal)}
+          </div>
+          {discountAmount > 0 && (
+            <div style={{ fontSize: "12px", color: sv.muted, textDecoration: "line-through" }}>
+              {formatCurrency(originalGrandTotal)}
+            </div>
+          )}
         </div>
       </div>
 
@@ -271,7 +378,7 @@ export function CustomerPaymentSheet({
             border: `1px solid ${sv.border}`,
             borderRadius: "14px",
             padding: "16px",
-            marginBottom: "20px",
+            marginBottom: "16px",
           }}
         >
           <div
@@ -315,6 +422,21 @@ export function CustomerPaymentSheet({
             <span>Tax</span>
             <span>{formatCurrency(taxTotal)}</span>
           </div>
+          {discountAmount > 0 && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "13px",
+                color: "#4ade80",
+                marginTop: "6px",
+                fontWeight: "600",
+              }}
+            >
+              <span>🎉 Discount ({appliedPromo?.name})</span>
+              <span>-{formatCurrency(discountAmount)}</span>
+            </div>
+          )}
           <div
             style={{
               display: "flex",
@@ -328,6 +450,219 @@ export function CustomerPaymentSheet({
             <span>Total</span>
             <span style={{ color: sv.primary }}>{formatCurrency(grandTotal)}</span>
           </div>
+        </div>
+
+        {/* ── COUPON SECTION ── */}
+        <div style={{ marginBottom: "16px" }}>
+          {/* Auto-applied / applied promo banner */}
+          {appliedPromo && (
+            <div
+              style={{
+                background: "rgba(74,222,128,0.08)",
+                border: "1px solid rgba(74,222,128,0.3)",
+                borderRadius: "12px",
+                padding: "12px 14px",
+                display: "flex",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: "10px",
+                marginBottom: "12px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                <div style={{ fontSize: "20px" }}>🎁</div>
+                <div>
+                  <div style={{ fontSize: "13px", fontWeight: "700", color: "#4ade80" }}>
+                    {appliedPromo.code ? `Code: ${appliedPromo.code}` : "🌟 Automatic Offer"} — {appliedPromo.name}
+                  </div>
+                  <div style={{ fontSize: "12px", color: sv.muted, marginTop: "2px" }}>
+                    {appliedPromo.discountType === "PERCENTAGE"
+                      ? `${appliedPromo.discountValue}% off`
+                      : `₹${appliedPromo.discountValue} off`}
+                    {" · "}You save {formatCurrency(appliedPromo.discountAmount)}!
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={removePromo}
+                style={{
+                  background: "rgba(239,68,68,0.1)",
+                  border: "none",
+                  borderRadius: "6px",
+                  color: "#f87171",
+                  padding: "4px",
+                  cursor: "pointer",
+                  flexShrink: 0,
+                  display: "flex",
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
+          {/* Promo code entry toggle */}
+          {!appliedPromo && (
+            <button
+              id="toggle-coupon-input-cust"
+              onClick={() => setShowCouponInput((v) => !v)}
+              style={{
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "12px 16px",
+                background: "rgba(var(--color-primary-rgb),0.06)",
+                border: `1px solid rgba(var(--color-primary-rgb),0.2)`,
+                borderRadius: "12px",
+                color: sv.primary,
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: "pointer",
+                marginBottom: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                <Tag size={16} />
+                Have a promo code?
+              </div>
+              {showCouponInput ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+            </button>
+          )}
+
+          {/* Promo code input */}
+          {showCouponInput && !appliedPromo && (
+            <div style={{ marginBottom: "10px" }}>
+              <div style={{ display: "flex", gap: "8px" }}>
+                <input
+                  id="cust-coupon-code-input"
+                  type="text"
+                  value={couponCode}
+                  onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyCoupon()}
+                  placeholder="Enter promo code"
+                  style={{
+                    flex: 1,
+                    padding: "12px 14px",
+                    borderRadius: "12px",
+                    background: "rgba(255,255,255,0.05)",
+                    border: `1px solid ${couponError ? "#ef4444" : sv.border}`,
+                    color: sv.text,
+                    fontSize: "15px",
+                    fontWeight: "600",
+                    letterSpacing: "0.05em",
+                    outline: "none",
+                  }}
+                />
+                <button
+                  id="cust-apply-coupon-btn"
+                  onClick={handleApplyCoupon}
+                  disabled={couponLoading || !couponCode.trim()}
+                  style={{
+                    padding: "12px 20px",
+                    borderRadius: "12px",
+                    background:
+                      couponLoading || !couponCode.trim()
+                        ? sv.border
+                        : "var(--color-primary)",
+                    color: couponLoading || !couponCode.trim() ? sv.muted : "#fff",
+                    border: "none",
+                    fontWeight: "700",
+                    fontSize: "14px",
+                    cursor: couponLoading || !couponCode.trim() ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {couponLoading ? (
+                    <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+                  ) : null}
+                  Apply
+                </button>
+              </div>
+              {couponError && (
+                <p
+                  style={{
+                    color: "#f87171",
+                    fontSize: "13px",
+                    marginTop: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                  }}
+                >
+                  <AlertCircle size={13} /> {couponError}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Dismissed auto-promo reminder */}
+          {!appliedPromo && autoPromos.length > 0 && (
+            <div
+              style={{
+                background: "rgba(251,191,36,0.08)",
+                border: "1px solid rgba(251,191,36,0.25)",
+                borderRadius: "12px",
+                padding: "12px 14px",
+                marginBottom: "10px",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: "13px",
+                  fontWeight: "700",
+                  color: "#fbbf24",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
+              >
+                <Sparkles size={14} /> Offer available!
+              </div>
+              <div style={{ fontSize: "12px", color: sv.muted, margin: "4px 0 8px" }}>
+                Apply &ldquo;{autoPromos[0].name}&rdquo; to save {formatCurrency(autoPromos[0].discountAmount)}
+              </div>
+              <button
+                onClick={() => {
+                  setAppliedPromo(autoPromos[0]);
+                  setCouponSuccess(`🎉 Applied!`);
+                }}
+                style={{
+                  background: "rgba(251,191,36,0.15)",
+                  border: "none",
+                  borderRadius: "8px",
+                  color: "#fbbf24",
+                  padding: "6px 14px",
+                  fontSize: "13px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                }}
+              >
+                Apply offer
+              </button>
+            </div>
+          )}
+
+          {/* Success message */}
+          {couponSuccess && (
+            <div
+              style={{
+                background: "rgba(74,222,128,0.08)",
+                border: "1px solid rgba(74,222,128,0.25)",
+                borderRadius: "10px",
+                padding: "10px 14px",
+                fontSize: "13px",
+                color: "#4ade80",
+                fontWeight: "600",
+                marginBottom: "4px",
+              }}
+            >
+              {couponSuccess}
+            </div>
+          )}
         </div>
 
         {/* Error */}
@@ -386,7 +721,7 @@ export function CustomerPaymentSheet({
           ))}
         </div>
 
-        {/* ── Razorpay Tab (default / recommended) ── */}
+        {/* ── Razorpay Tab ── */}
         {tab === "razorpay" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
             <div
@@ -404,8 +739,24 @@ export function CustomerPaymentSheet({
               </div>
               <div style={{ fontSize: "13px", color: sv.muted, lineHeight: "1.6" }}>
                 Card · Net Banking · Wallets · UPI
-                <br />Secured & encrypted checkout
+                <br />Secured &amp; encrypted checkout
               </div>
+              {discountAmount > 0 && (
+                <div
+                  style={{
+                    marginTop: "14px",
+                    background: "rgba(74,222,128,0.1)",
+                    border: "1px solid rgba(74,222,128,0.25)",
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                    fontSize: "13px",
+                    color: "#4ade80",
+                    fontWeight: "600",
+                  }}
+                >
+                  🎉 {formatCurrency(discountAmount)} discount applied!
+                </div>
+              )}
             </div>
 
             <button
@@ -463,6 +814,23 @@ export function CustomerPaymentSheet({
               ) : (
                 <div style={{ color: sv.muted, textAlign: "center", padding: "20px" }}>
                   UPI not configured. Please ask staff.
+                </div>
+              )}
+              {discountAmount > 0 && (
+                <div
+                  style={{
+                    background: "rgba(74,222,128,0.08)",
+                    border: "1px solid rgba(74,222,128,0.25)",
+                    borderRadius: "8px",
+                    padding: "8px 14px",
+                    fontSize: "13px",
+                    color: "#4ade80",
+                    fontWeight: "600",
+                    width: "100%",
+                    textAlign: "center",
+                  }}
+                >
+                  🎉 Discount applied — pay only {formatCurrency(grandTotal)}
                 </div>
               )}
             </div>

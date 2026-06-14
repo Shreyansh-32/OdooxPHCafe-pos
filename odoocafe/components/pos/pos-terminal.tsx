@@ -15,6 +15,7 @@ import {
   WifiOff,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   X,
   Layers,
   Users,
@@ -347,6 +348,19 @@ export function POSTerminal() {
     const matchesCat = !selectedCategory || p.category.id === selectedCategory;
     return matchesSearch && matchesCat && p.isAvailable;
   });
+
+  // Pagination — 10 items per page
+  const ITEMS_PER_PAGE = 10;
+  const [menuPage, setMenuPage] = useState(0);
+
+  // Reset to page 0 whenever search or category changes
+  useEffect(() => { setMenuPage(0); }, [search, selectedCategory]);
+
+  const totalMenuPages = Math.max(1, Math.ceil(filteredProducts.length / ITEMS_PER_PAGE));
+  const paginatedProducts = filteredProducts.slice(
+    menuPage * ITEMS_PER_PAGE,
+    (menuPage + 1) * ITEMS_PER_PAGE
+  );
 
   const handleAddProduct = (product: Product) => {
     addItem({
@@ -1077,103 +1091,200 @@ export function POSTerminal() {
           style={{
             flex: 1,
             overflowY: "auto",
-            padding: "16px",
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
-            gap: "12px",
-            alignContent: "start",
+            padding: "16px 16px 0",
+            display: "flex",
+            flexDirection: "column",
+            gap: 0,
           }}
         >
-          {filteredProducts.map((product) => (
-            <button
-              key={product.id}
-              id={`product-${product.id}`}
-              onClick={() => handleAddProduct(product)}
-              style={{
-                background: "var(--color-bg-elevated)",
-                border: `1px solid ${product.category.color ? product.category.color + "33" : "var(--color-border)"}`,
-                borderRadius: "12px",
-                padding: "16px 14px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "6px",
-                textAlign: "left",
-                cursor: "pointer",
-                transition: "all 0.15s",
-                position: "relative",
-                width: "100%",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = product.category.color || "var(--color-primary)";
-                e.currentTarget.style.background = "var(--color-bg-overlay)";
-                e.currentTarget.style.transform = "translateY(-2px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = product.category.color ? product.category.color + "33" : "var(--color-border)";
-                e.currentTarget.style.background = "var(--color-bg-elevated)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <div
+          {/* Grid */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))",
+              gap: "12px",
+              alignContent: "start",
+              flex: 1,
+            }}
+          >
+            {paginatedProducts.map((product) => (
+              <button
+                key={product.id}
+                id={`product-${product.id}`}
+                onClick={() => handleAddProduct(product)}
                 style={{
-                  fontSize: "11px",
-                  color: "var(--color-text-muted)",
-                  fontWeight: "600",
-                  letterSpacing: "0.05em",
-                }}
-              >
-                {product.category.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "14px",
-                  fontWeight: "600",
-                  color: "var(--color-text)",
-                  lineHeight: "1.3",
-                }}
-              >
-                {product.name}
-              </div>
-              <div
-                style={{
-                  fontSize: "15px",
-                  fontWeight: "700",
-                  color: product.category.color || "var(--color-primary)",
-                  marginTop: "4px",
-                }}
-              >
-                {formatCurrency(Number(product.price))}
-              </div>
-              <div
-                style={{
-                  position: "absolute",
-                  top: "10px",
-                  right: "10px",
-                  width: "22px",
-                  height: "22px",
-                  borderRadius: "50%",
-                  background: product.category.color || "var(--color-primary)",
+                  background: "var(--color-bg-elevated)",
+                  border: `1px solid ${product.category.color ? product.category.color + "33" : "var(--color-border)"}`,
+                  borderRadius: "12px",
+                  padding: "16px 14px",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  opacity: 0.7,
+                  flexDirection: "column",
+                  gap: "6px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  position: "relative",
+                  width: "100%",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = product.category.color || "var(--color-primary)";
+                  e.currentTarget.style.background = "var(--color-bg-overlay)";
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = product.category.color ? product.category.color + "33" : "var(--color-border)";
+                  e.currentTarget.style.background = "var(--color-bg-elevated)";
+                  e.currentTarget.style.transform = "translateY(0)";
                 }}
               >
-                <Plus size={12} color="#fff" />
-              </div>
-            </button>
-          ))}
+                <div
+                  style={{
+                    fontSize: "11px",
+                    color: "var(--color-text-muted)",
+                    fontWeight: "600",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {product.category.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: "14px",
+                    fontWeight: "600",
+                    color: "var(--color-text)",
+                    lineHeight: "1.3",
+                  }}
+                >
+                  {product.name}
+                </div>
+                <div
+                  style={{
+                    fontSize: "15px",
+                    fontWeight: "700",
+                    color: product.category.color || "var(--color-primary)",
+                    marginTop: "4px",
+                  }}
+                >
+                  {formatCurrency(Number(product.price))}
+                </div>
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    width: "22px",
+                    height: "22px",
+                    borderRadius: "50%",
+                    background: product.category.color || "var(--color-primary)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    opacity: 0.7,
+                  }}
+                >
+                  <Plus size={12} color="#fff" />
+                </div>
+              </button>
+            ))}
 
-          {filteredProducts.length === 0 && (
+            {filteredProducts.length === 0 && (
+              <div
+                style={{
+                  gridColumn: "1 / -1",
+                  textAlign: "center",
+                  padding: "60px 20px",
+                  color: "var(--color-text-faint)",
+                }}
+              >
+                No products found
+              </div>
+            )}
+          </div>
+
+          {/* Pagination Bar */}
+          {totalMenuPages > 1 && (
             <div
               style={{
-                gridColumn: "1 / -1",
-                textAlign: "center",
-                padding: "60px 20px",
-                color: "var(--color-text-faint)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                padding: "12px 0 14px",
+                borderTop: "1px solid var(--color-border-muted)",
+                marginTop: "12px",
               }}
             >
-              No products found
+              <button
+                id="menu-page-prev"
+                onClick={() => setMenuPage((p) => Math.max(0, p - 1))}
+                disabled={menuPage === 0}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--color-border)",
+                  background: menuPage === 0 ? "transparent" : "var(--color-bg-elevated)",
+                  color: menuPage === 0 ? "var(--color-text-faint)" : "var(--color-text)",
+                  cursor: menuPage === 0 ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  opacity: menuPage === 0 ? 0.4 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                <ChevronLeft size={15} />
+              </button>
+
+              {Array.from({ length: totalMenuPages }).map((_, i) => (
+                <button
+                  key={i}
+                  id={`menu-page-${i}`}
+                  onClick={() => setMenuPage(i)}
+                  style={{
+                    minWidth: "32px",
+                    height: "32px",
+                    borderRadius: "8px",
+                    border: `1px solid ${menuPage === i ? "var(--color-primary)" : "var(--color-border)"}`,
+                    background: menuPage === i ? "var(--color-primary)" : "transparent",
+                    color: menuPage === i ? "#fff" : "var(--color-text-muted)",
+                    fontSize: "13px",
+                    fontWeight: menuPage === i ? "700" : "500",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                id="menu-page-next"
+                onClick={() => setMenuPage((p) => Math.min(totalMenuPages - 1, p + 1))}
+                disabled={menuPage === totalMenuPages - 1}
+                style={{
+                  padding: "6px 10px",
+                  borderRadius: "8px",
+                  border: "1px solid var(--color-border)",
+                  background: menuPage === totalMenuPages - 1 ? "transparent" : "var(--color-bg-elevated)",
+                  color: menuPage === totalMenuPages - 1 ? "var(--color-text-faint)" : "var(--color-text)",
+                  cursor: menuPage === totalMenuPages - 1 ? "not-allowed" : "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  opacity: menuPage === totalMenuPages - 1 ? 0.4 : 1,
+                  transition: "all 0.15s",
+                }}
+              >
+                <ChevronRight size={15} />
+              </button>
+
+              <span
+                style={{
+                  fontSize: "12px",
+                  color: "var(--color-text-muted)",
+                  marginLeft: "4px",
+                }}
+              >
+                {menuPage * ITEMS_PER_PAGE + 1}–{Math.min((menuPage + 1) * ITEMS_PER_PAGE, filteredProducts.length)} of {filteredProducts.length}
+              </span>
             </div>
           )}
         </div>
