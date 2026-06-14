@@ -8,6 +8,11 @@ const createTableSchema = z.object({
   tableNumber: z.string().min(1),
   seats: z.number().int().min(1),
   floorId: z.string().min(1),
+  x: z.number().int().min(0).default(0),
+  y: z.number().int().min(0).default(0),
+  width: z.number().int().min(1).default(1),
+  height: z.number().int().min(1).default(1),
+  status: z.string().default("AVAILABLE"),
 });
 
 // GET /api/tables — List all tables with floor and current order status
@@ -21,7 +26,7 @@ export async function GET(request: Request) {
       ...(floorId ? { floorId } : {}),
     },
     include: {
-      floor: { select: { id: true, name: true } },
+      floor: { select: { id: true, name: true, gridWidth: true, gridHeight: true } },
       orders: {
         where: { status: { in: ["DRAFT", "SENT"] } },
         select: { id: true, status: true, grandTotal: true },

@@ -52,6 +52,8 @@ interface Floor {
   id: string;
   name: string;
   sortOrder: number;
+  gridWidth: number;
+  gridHeight: number;
   _count?: { tables: number };
 }
 
@@ -61,160 +63,13 @@ interface Table {
   seats: number;
   isActive: boolean;
   floorId: string;
-  floor?: { id: string; name: string };
+  floor?: { id: string; name: string; gridWidth: number; gridHeight: number };
   orders?: { id: string; status: string; grandTotal: number }[];
-}
-
-function CollapsibleFloor({
-  floor,
-  tables,
-  isOpen,
-  onToggle,
-  onSelectTable,
-  selectedTableId,
-}: {
-  floor: Floor;
-  tables: Table[];
-  isOpen: boolean;
-  onToggle: () => void;
-  onSelectTable: (tableId: string) => void;
-  selectedTableId: string;
-}) {
-  return (
-    <div style={{ borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
-      <button
-        onClick={onToggle}
-        style={{
-          width: "100%",
-          padding: "12px 16px",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          background: "var(--color-bg-overlay)",
-          border: "none",
-          textAlign: "left",
-          borderRadius: "8px",
-          color: "var(--color-text)",
-          cursor: "pointer",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <Layers size={16} color="var(--color-primary)" />
-          <span style={{ fontWeight: "600", fontSize: "15px" }}>{floor.name}</span>
-          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
-            ({tables.length} tables)
-          </span>
-        </div>
-        <div>
-          {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
-        </div>
-      </button>
-
-      <AnimatePresence initial={false}>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: "easeInOut" }}
-            style={{ overflow: "hidden" }}
-          >
-            <div
-              style={{
-                padding: "16px 8px",
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
-                gap: "10px",
-              }}
-            >
-              {tables.map((table) => {
-                const hasActiveOrder = !!(table.orders && table.orders.length > 0);
-                const activeOrder = table.orders?.[0] || null;
-                const isSelected = selectedTableId === table.id;
-
-                return (
-                  <button
-                    key={table.id}
-                    onClick={() => onSelectTable(table.id)}
-                    style={{
-                      padding: "12px 10px",
-                      borderRadius: "8px",
-                      border: isSelected
-                        ? "2px solid var(--color-primary)"
-                        : "1px solid var(--color-border)",
-                      background: isSelected
-                        ? "rgba(200, 121, 65, 0.1)"
-                        : "var(--color-bg-elevated)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "4px",
-                      position: "relative",
-                      transition: "all 0.15s ease",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      width: "100%",
-                    }}
-                  >
-                    <span style={{ fontSize: "14px", fontWeight: "700" }}>
-                      T-{table.tableNumber}
-                    </span>
-                    <span
-                      style={{
-                        fontSize: "11px",
-                        color: "var(--color-text-muted)",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "2px",
-                      }}
-                    >
-                      <Users size={10} /> {table.seats} seats
-                    </span>
-
-                    {/* Status Badge */}
-                    <span
-                      style={{
-                        marginTop: "6px",
-                        fontSize: "10px",
-                        padding: "2px 6px",
-                        borderRadius: "999px",
-                        fontWeight: "600",
-                        background: hasActiveOrder
-                          ? "rgba(245, 158, 11, 0.15)"
-                          : "rgba(34, 197, 94, 0.15)",
-                        color: hasActiveOrder ? "#f59e0b" : "#4ade80",
-                      }}
-                    >
-                      {hasActiveOrder ? "Occupied" : "Available"}
-                    </span>
-
-                    {hasActiveOrder && activeOrder && (
-                      <span style={{ fontSize: "10px", color: "var(--color-primary)", fontWeight: "600", marginTop: "2px" }}>
-                        {formatCurrency(Number(activeOrder.grandTotal))}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-              {tables.length === 0 && (
-                <div
-                  style={{
-                    gridColumn: "1 / -1",
-                    textAlign: "center",
-                    padding: "20px",
-                    color: "var(--color-text-faint)",
-                    fontSize: "13px",
-                  }}
-                >
-                  No active tables on this floor
-                </div>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  status: string;
 }
 
 export function POSTerminal() {
@@ -306,6 +161,7 @@ export function POSTerminal() {
   }, [socket]);
 
 
+
   const filteredProducts = products.filter((p) => {
     const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
     const matchesCat = !selectedCategory || p.category.id === selectedCategory;
@@ -353,8 +209,33 @@ export function POSTerminal() {
   const selectedTable = tables.find((t) => t.id === selectedTableId);
   const hasActiveOrders = selectedTable && selectedTable.orders && selectedTable.orders.length > 0;
 
+  const renderChairsAroundTable = (seats: number, statusColor: string) => {
+    const chairs = [];
+    const radius = 5; // dot radius
+    if (seats <= 2) {
+      chairs.push(<div key="L" style={{ position: "absolute", left: `-${radius * 1.5}px`, top: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+      chairs.push(<div key="R" style={{ position: "absolute", right: `-${radius * 1.5}px`, top: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+    } else if (seats <= 4) {
+      chairs.push(<div key="L" style={{ position: "absolute", left: `-${radius * 1.5}px`, top: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+      chairs.push(<div key="R" style={{ position: "absolute", right: `-${radius * 1.5}px`, top: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+      chairs.push(<div key="T" style={{ position: "absolute", top: `-${radius * 1.5}px`, left: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+      chairs.push(<div key="B" style={{ position: "absolute", bottom: `-${radius * 1.5}px`, left: `calc(50% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+    } else {
+      const sideCount = Math.ceil(seats / 2);
+      for (let i = 0; i < sideCount; i++) {
+        const offsetPct = ((i + 1) / (sideCount + 1)) * 100;
+        chairs.push(<div key={`T-${i}`} style={{ position: "absolute", top: `-${radius * 1.5}px`, left: `calc(${offsetPct}% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+        chairs.push(<div key={`B-${i}`} style={{ position: "absolute", bottom: `-${radius * 1.5}px`, left: `calc(${offsetPct}% - ${radius}px)`, width: `${radius*2}px`, height: `${radius*2}px`, borderRadius: "50%", background: statusColor }} />);
+      }
+    }
+    return chairs;
+  };
+
   // Render modal for table selection
   const renderTableModal = () => {
+    const activeFloor = floors.find((f) => f.id === selectedFloorId);
+    const activeFloorTables = activeFloor ? tables.filter((t) => t.floorId === activeFloor.id && t.isActive) : [];
+
     return (
       <AnimatePresence>
         {isTableModalOpen && (
@@ -378,12 +259,12 @@ export function POSTerminal() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               style={{
-                width: "90%",
-                maxWidth: "600px",
-                maxHeight: "80vh",
+                width: "95%",
+                maxWidth: "900px",
+                maxHeight: "90vh",
                 background: "var(--color-bg-elevated)",
                 border: "1px solid var(--color-border)",
-                borderRadius: "16px",
+                borderRadius: "20px",
                 padding: "24px",
                 display: "flex",
                 flexDirection: "column",
@@ -391,6 +272,7 @@ export function POSTerminal() {
                 boxShadow: "var(--shadow-lg)",
               }}
             >
+              {/* Header */}
               <div
                 style={{
                   display: "flex",
@@ -406,7 +288,7 @@ export function POSTerminal() {
                     Select Table
                   </h3>
                   <p style={{ margin: "2px 0 0", fontSize: "12px", color: "var(--color-text-muted)" }}>
-                    Choose a table to begin taking order items.
+                    Choose a table from the floor map layout to begin taking orders.
                   </p>
                 </div>
                 <button
@@ -435,26 +317,193 @@ export function POSTerminal() {
                 </button>
               </div>
 
-              <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px" }}>
-                {floors.map((floor) => {
-                  const floorTables = tables.filter((t) => t.floorId === floor.id);
-                  const isOpen = selectedFloorId === floor.id;
-                  return (
-                    <CollapsibleFloor
-                      key={floor.id}
-                      floor={floor}
-                      tables={floorTables}
-                      isOpen={isOpen}
-                      onToggle={() => setSelectedFloorId(isOpen ? null : floor.id)}
-                      onSelectTable={(tableId) => {
-                        setSelectedTableId(tableId);
-                        setIsTableModalOpen(false);
-                        setStep("MENU");
+              {/* Floor Tabs Selection inside Modal */}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                  overflowX: "auto",
+                  marginBottom: "16px",
+                  paddingBottom: "8px",
+                  borderBottom: "1.5px solid var(--color-border)",
+                }}
+              >
+                {floors.map((floor) => (
+                  <button
+                    key={floor.id}
+                    onClick={() => setSelectedFloorId(floor.id)}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      background: selectedFloorId === floor.id ? "rgba(200, 121, 65, 0.15)" : "var(--color-bg-overlay)",
+                      color: selectedFloorId === floor.id ? "#c87941" : "var(--color-text-muted)",
+                      border: selectedFloorId === floor.id ? "1px solid #c87941" : "1px solid var(--color-border)",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {floor.name}
+                  </button>
+                ))}
+              </div>
+
+              {/* Floor Map Layout Canvas */}
+              <div style={{ flex: 1, overflowY: "auto", paddingRight: "4px", display: "flex", flexDirection: "column" }}>
+                {activeFloor ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "16px", flex: 1 }}>
+                    {/* Status legends */}
+                    <div style={{ display: "flex", gap: "16px", fontSize: "12px", fontWeight: "600", padding: "0 4px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }}></span>
+                        Available
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#ef4444" }}></span>
+                        Occupied
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span style={{ display: "inline-block", width: "8px", height: "8px", borderRadius: "50%", background: "#f59e0b" }}></span>
+                        Reserved
+                      </div>
+                    </div>
+
+                    {/* Viewport for scaling */}
+                    <div
+                      id="pos-canvas-viewport"
+                      style={{
+                        height: "420px",
+                        width: "100%",
+                        background: "#0b0f19",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        position: "relative",
+                        boxShadow: "inset 0 4px 20px rgba(0,0,0,0.5)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
                       }}
-                      selectedTableId={selectedTableId}
-                    />
-                  );
-                })}
+                    >
+                      {/* CSS Grid Container */}
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: `repeat(${activeFloor.gridWidth}, 1fr)`,
+                          gridTemplateRows: `repeat(${activeFloor.gridHeight}, 1fr)`,
+                          gap: "8px",
+                          width: "100%",
+                          maxHeight: "100%",
+                          aspectRatio: `${activeFloor.gridWidth} / ${activeFloor.gridHeight}`,
+                          background: "#0f172a", // slate 900
+                          borderRadius: "12px",
+                          padding: "8px",
+                          position: "relative",
+                        }}
+                      >
+                        {/* Grid cells guides backdrop */}
+                        {Array.from({ length: activeFloor.gridHeight }).map((_, r) =>
+                          Array.from({ length: activeFloor.gridWidth }).map((_, c) => (
+                            <div
+                              key={`${r}-${c}`}
+                              style={{
+                                background: "rgba(255, 255, 255, 0.015)",
+                                border: "1px dashed rgba(255, 255, 255, 0.04)",
+                                borderRadius: "6px",
+                                gridColumnStart: c + 1,
+                                gridRowStart: r + 1,
+                              }}
+                            />
+                          ))
+                        )}
+
+                        {/* Tables */}
+                        {activeFloorTables.map((table) => {
+                          const hasActiveOrder = table.orders && table.orders.length > 0;
+                          const activeOrder = table.orders?.[0] || null;
+
+                          let statusColor = "#10b981"; // green
+                          let statusBg = "rgba(16, 185, 129, 0.12)";
+                          let borderHighlight = "1.5px solid #10b981";
+
+                          if (hasActiveOrder || table.status === "OCCUPIED") {
+                            statusColor = "#ef4444"; // red
+                            statusBg = "rgba(239, 68, 68, 0.12)";
+                            borderHighlight = "1.5px solid #ef4444";
+                          } else if (table.status === "RESERVED") {
+                            statusColor = "#f59e0b"; // amber
+                            statusBg = "rgba(245, 158, 11, 0.12)";
+                            borderHighlight = "1.5px solid #f59e0b";
+                          }
+
+                          return (
+                            <button
+                              key={table.id}
+                              onClick={() => {
+                                setSelectedTableId(table.id);
+                                setIsTableModalOpen(false);
+                                setStep("MENU");
+                              }}
+                              style={{
+                                gridColumn: `${table.x + 1} / span ${table.width}`,
+                                gridRow: `${table.y + 1} / span ${table.height}`,
+                                background: "#1e293b",
+                                border: borderHighlight,
+                                boxShadow: "0 4px 8px rgba(0,0,0,0.25)",
+                                borderRadius: "12px",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                gap: "2px",
+                                cursor: "pointer",
+                                padding: "4px",
+                                position: "relative",
+                                transition: "transform 0.15s ease",
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.03)"}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1.0)"}
+                            >
+                              {/* Chairs Distributed outside the table */}
+                              {renderChairsAroundTable(table.seats, statusColor)}
+
+                              <span style={{ fontSize: "14px", fontWeight: "800", color: "#c87941" }}>
+                                {table.tableNumber}
+                              </span>
+                              <span style={{ fontSize: "9px", color: "var(--color-text-muted)", display: "flex", alignItems: "center", gap: "2px" }}>
+                                <Users size={9} /> {table.seats}
+                              </span>
+                              
+                              <span
+                                style={{
+                                  fontSize: "8px",
+                                  fontWeight: "800",
+                                  padding: "1px 5px",
+                                  borderRadius: "999px",
+                                  color: statusColor,
+                                  background: statusBg,
+                                  marginTop: "1px",
+                                }}
+                              >
+                                {hasActiveOrder || table.status === "OCCUPIED" ? "Occupied" : table.status === "RESERVED" ? "Reserved" : "Free"}
+                              </span>
+
+                              {hasActiveOrder && activeOrder && (
+                                <span style={{ fontSize: "9px", color: "var(--color-primary)", fontWeight: "700", marginTop: "1px" }}>
+                                  {formatCurrency(Number(activeOrder.grandTotal))}
+                                </span>
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: "40px", textAlign: "center", color: "var(--color-text-muted)" }}>
+                    No floor selected.
+                  </div>
+                )}
               </div>
             </motion.div>
           </div>

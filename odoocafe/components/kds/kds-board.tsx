@@ -5,7 +5,7 @@ import { useSocket } from "@/components/providers/socket-provider";
 import { SOCKET_EVENTS } from "@/lib/socket-events";
 import { ChefHat, Clock, CheckCircle2, Flame, Wifi, WifiOff, Volume2, VolumeX } from "lucide-react";
 
-type KDSStatus = "PENDING" | "TO_COOK" | "PREPARING" | "COMPLETED";
+type KDSStatus = "PENDING" | "PREPARING" | "READY" | "DONE";
 
 interface KDSItem {
   id: string;
@@ -27,16 +27,16 @@ interface KDSTicket {
 
 const STATUS_COLORS: Record<KDSStatus, { bg: string; border: string; text: string; label: string }> = {
   PENDING:    { bg: "rgba(107,114,128,0.15)", border: "#6b7280", text: "#9ca3af", label: "Pending" },
-  TO_COOK:    { bg: "rgba(245,158,11,0.15)",  border: "#f59e0b", text: "#fbbf24", label: "To Cook" },
   PREPARING:  { bg: "rgba(59,130,246,0.15)",  border: "#3b82f6", text: "#60a5fa", label: "Preparing" },
-  COMPLETED:  { bg: "rgba(34,197,94,0.15)",   border: "#22c55e", text: "#4ade80", label: "Done" },
+  READY:      { bg: "rgba(245,158,11,0.15)",  border: "#f59e0b", text: "#fbbf24", label: "Ready" },
+  DONE:       { bg: "rgba(34,197,94,0.15)",   border: "#22c55e", text: "#4ade80", label: "Done" },
 };
 
 const NEXT_STATUS: Record<KDSStatus, KDSStatus | null> = {
-  PENDING: "TO_COOK",
-  TO_COOK: "PREPARING",
-  PREPARING: "COMPLETED",
-  COMPLETED: null,
+  PENDING: "PREPARING",
+  PREPARING: "READY",
+  READY: "DONE",
+  DONE: null,
 };
 
 function useElapsed(createdAt: string) {
@@ -89,7 +89,7 @@ export function KDSBoard() {
   const [tickets, setTickets] = useState<KDSTicket[]>([]);
   const [loading, setLoading] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
-  const [filter, setFilter] = useState<"ALL" | KDSStatus>("ALL");
+  const [filter, setFilter] = useState<KDSStatus>("PENDING");
   const [recentlyCompletedItems, setRecentlyCompletedItems] = useState<Record<string, number>>({});
   const { socket, isConnected } = useSocket();
   const audioRef = useRef<AudioContext | null>(null);
@@ -205,7 +205,7 @@ export function KDSBoard() {
         )
       );
 
-      if (payload.kdsStatus === "COMPLETED") {
+      if (payload.kdsStatus === "DONE") {
         scheduleCompletedItemVisibility(payload.itemId);
       } else {
         clearCompletedItemVisibility(payload.itemId);
@@ -218,7 +218,7 @@ export function KDSBoard() {
         if (!ticket) return prev;
 
         ticket.items.forEach((item) => {
-          if (item.kdsStatus === "COMPLETED") {
+          if (item.kdsStatus === "DONE") {
             scheduleCompletedItemVisibility(item.id);
           }
         });
@@ -263,12 +263,8 @@ export function KDSBoard() {
   };
 
   const visibleTickets = tickets.filter((t) => {
-    const hasVisibleItems = t.items.some(
-      (i) => i.kdsStatus !== "COMPLETED" || i.id in recentlyCompletedItems
-    );
-    if (filter === "ALL") return hasVisibleItems;
     return t.items.some(
-      (i) => i.kdsStatus === filter && (i.kdsStatus !== "COMPLETED" || i.id in recentlyCompletedItems)
+      (i) => i.kdsStatus === filter && (i.kdsStatus !== "DONE" || i.id in recentlyCompletedItems)
     );
   });
 
@@ -314,7 +310,7 @@ export function KDSBoard() {
 
         {/* Filters */}
         <div style={{ display: "flex", gap: "6px", marginLeft: "16px" }}>
-          {(["ALL", "PENDING", "TO_COOK", "PREPARING", "COMPLETED"] as const).map((f) => (
+          {(["PENDING", "PREPARING", "READY", "DONE"] as const).map((f) => (
             <button
               key={f}
               id={`kds-filter-${f.toLowerCase()}`}
@@ -325,19 +321,19 @@ export function KDSBoard() {
                 fontSize: "12px",
                 fontWeight: "600",
                 background: filter === f
-                  ? f === "ALL" ? "var(--color-primary)" : STATUS_COLORS[f as KDSStatus]?.bg
+                  ? STATUS_COLORS[f]?.bg
                   : "transparent",
                 color: filter === f
-                  ? f === "ALL" ? "#fff" : STATUS_COLORS[f as KDSStatus]?.text
+                  ? STATUS_COLORS[f]?.text
                   : "var(--color-text-muted)",
                 border: `1px solid ${
                   filter === f
-                    ? f === "ALL" ? "var(--color-primary)" : STATUS_COLORS[f as KDSStatus]?.border
+                    ? STATUS_COLORS[f]?.border
                     : "var(--color-border)"
                 }`,
               }}
             >
-              {f === "ALL" ? "All" : STATUS_COLORS[f as KDSStatus]?.label}
+              {STATUS_COLORS[f]?.label}
             </button>
           ))}
         </div>
@@ -400,9 +396,9 @@ export function KDSBoard() {
 
         {visibleTickets.map((ticket) => {
           const visibleItems = ticket.items.filter(
-            (item) => item.kdsStatus !== "COMPLETED" || item.id in recentlyCompletedItems
+            (item) => item.kdsStatus !== "DONE" || item.id in recentlyCompletedItems
           );
-          const allDone = visibleItems.length > 0 && visibleItems.every((i) => i.kdsStatus === "COMPLETED");
+          const allDone = visibleItems.length > 0 && visibleItems.every((i) => i.kdsStatus === "DONE");
           return (
             <div
               key={ticket.orderId}
