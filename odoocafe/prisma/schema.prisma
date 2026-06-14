@@ -30,10 +30,10 @@ enum OrderSource {
 }
 
 enum KdsStatus {
-  PENDING    // Just received
-  TO_COOK    // Acknowledged by kitchen
-  PREPARING  // Currently being made
-  COMPLETED  // Ready to serve
+  PENDING
+  PREPARING
+  READY
+  DONE
 }
 
 enum PaymentType {
@@ -87,12 +87,14 @@ model Customer {
 // ==============================
 
 model Floor {
-  id        String   @id @default(cuid())
-  name      String   // e.g., "Ground Floor", "Rooftop"
-  sortOrder Int      @default(0)
-  tables    Table[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String   // e.g., "Ground Floor", "Rooftop"
+  sortOrder  Int      @default(0)
+  gridWidth  Int      @default(12)
+  gridHeight Int      @default(8)
+  tables     Table[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model Table {
@@ -105,6 +107,11 @@ model Table {
   floorId       String
   floor         Floor     @relation(fields: [floorId], references: [id], onDelete: Cascade)
   orders        Order[]
+  x             Int       @default(0)
+  y             Int       @default(0)
+  width         Int       @default(1)
+  height        Int       @default(1)
+  status        String    @default("AVAILABLE")
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 

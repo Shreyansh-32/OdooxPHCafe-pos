@@ -59,10 +59,10 @@ interface Props {
 }
 
 const KDS_STATUS_LABEL: Record<string, { label: string; color: string }> = {
-  PENDING:   { label: "Queued",     color: "#9ca3af" },
-  TO_COOK:   { label: "Starting",   color: "#fbbf24" },
-  PREPARING: { label: "Cooking",    color: "#60a5fa" },
-  COMPLETED: { label: "Ready",      color: "#4ade80" },
+  PENDING:   { label: "Pending",   color: "#9ca3af" },
+  PREPARING: { label: "Preparing", color: "#60a5fa" },
+  READY:     { label: "Ready",     color: "#fbbf24" },
+  DONE:      { label: "Done",      color: "#4ade80" },
 };
 
 export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogout }: Props) {

@@ -13,7 +13,7 @@ function getIO() {
   return (global as any).io;
 }
 
-const KDS_STATUS_ORDER = ["PENDING", "TO_COOK", "PREPARING", "COMPLETED"] as const;
+const KDS_STATUS_ORDER = ["PENDING", "PREPARING", "READY", "DONE"] as const;
 
 // PATCH /api/kds/[itemId] — Update KDS item status
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -72,9 +72,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       );
     }
 
-    // Check if ALL items in the order are COMPLETED (using fresh data)
+    // Check if ALL items in the order are DONE (using fresh data)
     const allCompleted = freshItems.every(
-      (i: { kdsStatus: string }) => i.kdsStatus === "COMPLETED"
+      (i: { kdsStatus: string }) => i.kdsStatus === "DONE"
     );
 
     if (allCompleted) {

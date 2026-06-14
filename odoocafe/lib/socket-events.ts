@@ -16,8 +16,8 @@ export const SOCKET_EVENTS = {
 
   // ---- KDS (Kitchen → Server → Cashier + Customer) ----
   KDS_NEW_TICKET: "kds:new_ticket",     // New order arrives in kitchen
-  KDS_ITEM_UPDATED: "kds:item_updated", // TO_COOK/PREPARING/COMPLETED
-  KDS_ORDER_COMPLETE: "kds:order_complete", // All items COMPLETED
+  KDS_ITEM_UPDATED: "kds:item_updated", // PENDING/PREPARING/READY/DONE
+  KDS_ORDER_COMPLETE: "kds:order_complete", // All items DONE
 
   // ---- Table (Server → Cashier) ----
   TABLE_STATUS: "table:status",            // available/occupied/bill-pending

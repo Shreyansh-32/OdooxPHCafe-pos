@@ -41,19 +41,31 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   }
 
   const body = await request.json();
-  const { tableNumber, seats, isActive } = body;
+  const { tableNumber, seats, isActive, x, y, width, height, status } = body;
 
-  const table = await prisma.table.update({
-    where: { id },
-    data: {
-      ...(tableNumber !== undefined && { tableNumber }),
-      ...(seats !== undefined && { seats }),
-      ...(isActive !== undefined && { isActive }),
-    },
-    include: { floor: true },
-  });
+  try {
+    const table = await prisma.table.update({
+      where: { id },
+      data: {
+        ...(tableNumber !== undefined && { tableNumber }),
+        ...(seats !== undefined && { seats }),
+        ...(isActive !== undefined && { isActive }),
+        ...(x !== undefined && { x }),
+        ...(y !== undefined && { y }),
+        ...(width !== undefined && { width }),
+        ...(height !== undefined && { height }),
+        ...(status !== undefined && { status }),
+      },
+      include: { floor: true },
+    });
 
-  return NextResponse.json({ ok: true, data: table });
+    return NextResponse.json({ ok: true, data: table });
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: "Table number already exists on this floor" },
+      { status: 409 }
+    );
+  }
 }
 
 // DELETE /api/tables/[id] — Deactivate table (Admin only)
@@ -64,9 +76,19 @@ export async function DELETE(_req: Request, { params }: RouteParams) {
     return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 403 });
   }
 
+  const existingTable = await prisma.table.findUnique({
+    where: { id },
+  });
+  if (!existingTable) {
+    return NextResponse.json({ ok: false, error: "Table not found" }, { status: 404 });
+  }
+
   const table = await prisma.table.update({
     where: { id },
-    data: { isActive: false },
+    data: {
+      isActive: false,
+      tableNumber: `${existingTable.tableNumber}_deleted_${Date.now()}_${id.slice(-4)}`,
+    },
   });
 
   return NextResponse.json({ ok: true, data: table });

@@ -1,7 +1,6 @@
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY || "re_fallback_key");
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "receipt@cafeodoo.com";
+const FROM_EMAIL = process.env.SMTP_FROM_EMAIL || process.env.EMAIL_FROM || "receipt@cafeodoo.com";
+const FROM_NAME = process.env.EMAIL_FROM_NAME || "Café Odoo";
+const BREVO_API_KEY = process.env.BREVO_API_KEY || "";
 
 export interface ReceiptItem {
   name: string;
@@ -37,7 +36,7 @@ export async function sendReceiptEmail(opts: SendReceiptOptions) {
     )
     .join("");
 
-  const html = `
+  const htmlContent = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -100,11 +99,10 @@ export async function sendReceiptEmail(opts: SendReceiptOptions) {
           <td>Tax</td>
           <td>₹${opts.taxTotal.toFixed(2)}</td>
         </tr>
-        ${
-          opts.discountTotal > 0
-            ? `<tr><td>Discount</td><td>-₹${opts.discountTotal.toFixed(2)}</td></tr>`
-            : ""
-        }
+        ${opts.discountTotal > 0
+      ? `<tr><td>Discount</td><td>-₹${opts.discountTotal.toFixed(2)}</td></tr>`
+      : ""
+    }
         <tr class="grand-total">
           <td>Grand Total</td>
           <td>₹${opts.grandTotal.toFixed(2)}</td>
@@ -119,17 +117,41 @@ export async function sendReceiptEmail(opts: SendReceiptOptions) {
 </body>
 </html>`;
 
-  const { data, error } = await resend.emails.send({
-    from: FROM_EMAIL,
-    to: opts.to,
-    subject: `Your Order #${opts.orderNumber} at Café Odoo is confirmed! ☕`,
-    html,
-  });
+  try {
+    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+      method: "POST",
+      headers: {
+        "api-key": BREVO_API_KEY,
+        "Content-Type": "application/json",
+        "accept": "application/json",
+      },
+      body: JSON.stringify({
+        sender: {
+          name: FROM_NAME,
+          email: FROM_EMAIL,
+        },
+        to: [
+          {
+            email: opts.to,
+            name: opts.customerName || "Customer",
+          },
+        ],
+        subject: `Your Order #${opts.orderNumber} at Café Odoo is confirmed! ☕`,
+        htmlContent,
+      }),
+    });
 
-  if (error) {
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      console.error("[Email] Brevo API error:", errorData || response.statusText);
+      throw new Error(`Brevo API failed with status ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log(`[Email] Successfully sent receipt to ${opts.to}. Message ID: ${data.messageId}`);
+    return data;
+  } catch (error) {
     console.error("[Email] Failed to send receipt:", error);
     throw new Error("Failed to send receipt email");
   }
-
-  return data;
 }
