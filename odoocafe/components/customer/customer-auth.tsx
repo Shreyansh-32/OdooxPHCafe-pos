@@ -84,7 +84,7 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
       }}
     >
       {/* Radial glow */}
-      <div style={{ position: "fixed", top: "30%", left: "50%", transform: "translateX(-50%)", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(180, 107, 122,0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
+      <div style={{ position: "fixed", top: "30%", left: "50%", transform: "translateX(-50%)", width: "400px", height: "400px", background: "radial-gradient(circle, rgba(var(--color-primary-rgb),0.1) 0%, transparent 70%)", pointerEvents: "none" }} />
 
       <div style={{ width: "100%", maxWidth: "400px", animation: "fadeIn 0.4s ease" }}>
         {/* Table badge */}
@@ -92,10 +92,10 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
           <div style={{ marginBottom: "12px", display: "flex", justifyContent: "center" }}>
             <Image src="/CafePOS.png" alt="CafePOS Logo" width={80} height={80} style={{ objectFit: "contain" }} />
           </div>
-          <h1 style={{ margin: "0 0 6px", fontSize: "26px", fontWeight: "800", background: "linear-gradient(135deg, #F6E1E6, #B46B7A)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <h1 style={{ margin: "0 0 6px", fontSize: "26px", fontWeight: "800", background: "linear-gradient(135deg, #F6E1E6, var(--color-primary))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
             Café Odoo
           </h1>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(180, 107, 122,0.15)", border: "1px solid rgba(180, 107, 122,0.3)", borderRadius: "999px", padding: "5px 14px", fontSize: "14px", color: "#B46B7A", fontWeight: "600" }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: "6px", background: "rgba(var(--color-primary-rgb),0.15)", border: "1px solid rgba(var(--color-primary-rgb),0.3)", borderRadius: "999px", padding: "5px 14px", fontSize: "14px", color: "var(--color-primary)", fontWeight: "600" }}>
             📍 {floorName} · Table {tableNumber}
           </div>
         </div>
@@ -144,7 +144,7 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
                 <input id="reg-password" type="password" style={inputStyle} placeholder="••••••••" {...registerForm.register("password")} />
                 {registerForm.formState.errors.password && <p style={{ color: "#f87171", fontSize: "12px", marginTop: "4px" }}>{registerForm.formState.errors.password.message}</p>}
               </div>
-              <button id="reg-submit" type="submit" disabled={loading} style={{ marginTop: "8px", background: loading ? "#5a3a20" : "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "14px", justifyContent: "center", borderRadius: "10px", fontWeight: "700", fontSize: "15px", boxShadow: "0 4px 16px rgba(180, 107, 122,0.25)" }}>
+              <button id="reg-submit" type="submit" disabled={loading} style={{ marginTop: "8px", background: loading ? "#5a3a20" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "14px", justifyContent: "center", borderRadius: "10px", fontWeight: "700", fontSize: "15px", boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.25)" }}>
                 {loading ? "Creating account..." : "Create Account & Order"}
               </button>
             </form>
@@ -161,7 +161,7 @@ export function CustomerAuth({ tableId, tableNumber, floorName, onSuccess }: Pro
                 <input id="login-password" type="password" style={inputStyle} placeholder="••••••••" {...loginForm.register("password")} />
                 {loginForm.formState.errors.password && <p style={{ color: "#f87171", fontSize: "12px", marginTop: "4px" }}>{loginForm.formState.errors.password.message}</p>}
               </div>
-              <button id="login-submit" type="submit" disabled={loading} style={{ marginTop: "8px", background: loading ? "#5a3a20" : "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "14px", justifyContent: "center", borderRadius: "10px", fontWeight: "700", fontSize: "15px", boxShadow: "0 4px 16px rgba(180, 107, 122,0.25)" }}>
+              <button id="login-submit" type="submit" disabled={loading} style={{ marginTop: "8px", background: loading ? "#5a3a20" : "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "14px", justifyContent: "center", borderRadius: "10px", fontWeight: "700", fontSize: "15px", boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.25)" }}>
                 {loading ? "Signing in..." : "Sign In & Order"}
               </button>
             </form>

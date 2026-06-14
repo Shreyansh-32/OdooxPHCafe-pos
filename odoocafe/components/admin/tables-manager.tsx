@@ -96,12 +96,12 @@ export function TablesManager() {
           id="add-table-btn"
           onClick={() => setShowAddTable(true)}
           style={{
-            background: "linear-gradient(135deg, #B46B7A, #5A2D34)",
+            background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
             color: "#fff",
             padding: "10px 20px",
             borderRadius: "10px",
             fontWeight: "600",
-            boxShadow: "0 4px 12px rgba(180, 107, 122,0.3)",
+            boxShadow: "0 4px 12px rgba(var(--color-primary-rgb),0.3)",
           }}
         >
           <Plus size={16} /> Add Table
@@ -134,9 +134,9 @@ export function TablesManager() {
               borderRadius: "999px",
               fontSize: "13px",
               fontWeight: "600",
-              background: selectedFloor === f.id ? "rgba(180, 107, 122,0.15)" : "var(--color-bg-overlay)",
-              color: selectedFloor === f.id ? "#B46B7A" : "var(--color-text-muted)",
-              border: `1px solid ${selectedFloor === f.id ? "#B46B7A44" : "var(--color-border)"}`,
+              background: selectedFloor === f.id ? "rgba(var(--color-primary-rgb),0.15)" : "var(--color-bg-overlay)",
+              color: selectedFloor === f.id ? "var(--color-primary)" : "var(--color-text-muted)",
+              border: `1px solid ${selectedFloor === f.id ? "var(--color-primary)44" : "var(--color-border)"}`,
             }}
           >
             {f.name}
@@ -174,7 +174,7 @@ export function TablesManager() {
                   {/* Table Header */}
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                     <div>
-                      <div style={{ fontSize: "20px", fontWeight: "800", color: "#B46B7A" }}>
+                      <div style={{ fontSize: "20px", fontWeight: "800", color: "var(--color-primary)" }}>
                         {table.tableNumber}
                       </div>
                       <div style={{ fontSize: "12px", color: "var(--color-text-faint)" }}>
@@ -210,9 +210,9 @@ export function TablesManager() {
                         flex: 1,
                         padding: "8px",
                         borderRadius: "8px",
-                        background: "rgba(180, 107, 122,0.12)",
-                        border: "1px solid rgba(180, 107, 122,0.3)",
-                        color: "#B46B7A",
+                        background: "rgba(var(--color-primary-rgb),0.12)",
+                        border: "1px solid rgba(var(--color-primary-rgb),0.3)",
+                        color: "var(--color-primary)",
                         fontSize: "12px",
                         fontWeight: "600",
                         justifyContent: "center",
@@ -298,7 +298,7 @@ export function TablesManager() {
                   flex: 1,
                   padding: "11px",
                   borderRadius: "10px",
-                  background: "linear-gradient(135deg, #B46B7A, #5A2D34)",
+                  background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
                   color: "#fff",
                   fontSize: "14px",
                   fontWeight: "600",
@@ -348,7 +348,7 @@ export function TablesManager() {
               </div>
               <div style={{ display: "flex", gap: "10px" }}>
                 <button type="button" onClick={() => setShowAddTable(false)} style={{ flex: 1, background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", padding: "11px", justifyContent: "center" }}>Cancel</button>
-                <button id="add-table-submit" type="submit" style={{ flex: 1, background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>Add Table</button>
+                <button id="add-table-submit" type="submit" style={{ flex: 1, background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>Add Table</button>
               </div>
             </form>
           </div>

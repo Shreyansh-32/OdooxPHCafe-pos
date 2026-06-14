@@ -140,7 +140,7 @@ export function OrdersManager() {
                 const statusStyle = STATUS_COLORS[order.status] || STATUS_COLORS.DRAFT;
                 return (
                   <tr key={order.id} style={{ borderBottom: "1px solid var(--color-border-muted)", transition: "background 0.2s" }}>
-                    <td style={{ padding: "16px 20px", fontSize: "15px", fontWeight: "700", color: "#B46B7A" }}>
+                    <td style={{ padding: "16px 20px", fontSize: "15px", fontWeight: "700", color: "var(--color-primary)" }}>
                       #{order.orderNumber}
                     </td>
                     <td style={{ padding: "16px 20px", fontSize: "14px", color: "var(--color-text)" }}>

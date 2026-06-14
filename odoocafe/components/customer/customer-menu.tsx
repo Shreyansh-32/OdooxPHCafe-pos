@@ -252,9 +252,9 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
               borderRadius: "8px",
               fontSize: "12px",
               fontWeight: "600",
-              background: view === "profile" ? "rgba(180, 107, 122,0.2)" : "transparent",
-              border: `1px solid ${view === "profile" ? "#B46B7A" : styleVars.border}`,
-              color: view === "profile" ? "#B46B7A" : styleVars.muted,
+              background: view === "profile" ? "rgba(var(--color-primary-rgb),0.2)" : "transparent",
+              border: `1px solid ${view === "profile" ? "var(--color-primary)" : styleVars.border}`,
+              color: view === "profile" ? "var(--color-primary)" : styleVars.muted,
               display: "flex",
               alignItems: "center",
               gap: "4px"
@@ -271,9 +271,9 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
                 borderRadius: "8px",
                 fontSize: "12px",
                 fontWeight: "600",
-                background: view === "status" ? "rgba(180, 107, 122,0.2)" : "transparent",
-                border: `1px solid ${view === "status" ? "#B46B7A" : styleVars.border}`,
-                color: view === "status" ? "#B46B7A" : styleVars.muted,
+                background: view === "status" ? "rgba(var(--color-primary-rgb),0.2)" : "transparent",
+                border: `1px solid ${view === "status" ? "var(--color-primary)" : styleVars.border}`,
+                color: view === "status" ? "var(--color-primary)" : styleVars.muted,
               }}
             >
               <ChefHat size={13} /> Order
@@ -287,9 +287,9 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
               borderRadius: "8px",
               fontSize: "12px",
               fontWeight: "600",
-              background: view === "menu" ? "rgba(180, 107, 122,0.2)" : "transparent",
-              border: `1px solid ${view === "menu" ? "#B46B7A" : styleVars.border}`,
-              color: view === "menu" ? "#B46B7A" : styleVars.muted,
+              background: view === "menu" ? "rgba(var(--color-primary-rgb),0.2)" : "transparent",
+              border: `1px solid ${view === "menu" ? "var(--color-primary)" : styleVars.border}`,
+              color: view === "menu" ? "var(--color-primary)" : styleVars.muted,
             }}
           >
             Menu
@@ -514,7 +514,7 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
           <button
             id="view-cart-bottom"
             onClick={() => setShowCart(true)}
-            style={{ width: "100%", padding: "15px", borderRadius: "12px", background: `linear-gradient(135deg, ${styleVars.primary}, #5A2D34)`, color: "#fff", fontWeight: "700", fontSize: "16px", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(180, 107, 122,0.3)" }}
+            style={{ width: "100%", padding: "15px", borderRadius: "12px", background: `linear-gradient(135deg, ${styleVars.primary}, var(--color-primary-dark))`, color: "#fff", fontWeight: "700", fontSize: "16px", justifyContent: "space-between", boxShadow: "0 8px 24px rgba(var(--color-primary-rgb),0.3)" }}
           >
             <span style={{ background: "rgba(0,0,0,0.2)", padding: "2px 10px", borderRadius: "999px" }}>{cartCount}</span>
             <span>View Cart</span>
@@ -553,7 +553,7 @@ export function CustomerMenu({ tableId, tableNumber, floorName, customer, onLogo
                 id="place-order-btn"
                 onClick={placeOrder}
                 disabled={submitting}
-                style={{ width: "100%", padding: "15px", borderRadius: "12px", background: submitting ? "#5a3a20" : `linear-gradient(135deg, ${styleVars.primary}, #5A2D34)`, color: "#fff", fontWeight: "700", fontSize: "16px", justifyContent: "center", boxShadow: "0 8px 24px rgba(180, 107, 122,0.3)" }}
+                style={{ width: "100%", padding: "15px", borderRadius: "12px", background: submitting ? "#5a3a20" : `linear-gradient(135deg, ${styleVars.primary}, var(--color-primary-dark))`, color: "#fff", fontWeight: "700", fontSize: "16px", justifyContent: "center", boxShadow: "0 8px 24px rgba(var(--color-primary-rgb),0.3)" }}
               >
                 <Send size={16} />
                 {submitting ? "Sending order..." : "Place Order"}

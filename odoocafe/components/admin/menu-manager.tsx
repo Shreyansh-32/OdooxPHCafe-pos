@@ -130,12 +130,12 @@ export function MenuManager() {
           id="add-product-btn"
           onClick={openAdd}
           style={{
-            background: "linear-gradient(135deg, #B46B7A, #5A2D34)",
+            background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
             color: "#fff",
             padding: "10px 20px",
             borderRadius: "10px",
             fontWeight: "600",
-            boxShadow: "0 4px 12px rgba(180, 107, 122,0.3)",
+            boxShadow: "0 4px 12px rgba(var(--color-primary-rgb),0.3)",
           }}
         >
           <Plus size={16} /> Add Product
@@ -335,7 +335,7 @@ export function MenuManager() {
                   type="checkbox"
                   checked={form.isAvailable}
                   onChange={(e) => setForm((f) => ({ ...f, isAvailable: e.target.checked }))}
-                  style={{ width: "16px", height: "16px", accentColor: "#B46B7A" }}
+                  style={{ width: "16px", height: "16px", accentColor: "var(--color-primary)" }}
                 />
                 <label style={{ margin: 0 }}>Available on menu</label>
               </div>
@@ -343,7 +343,7 @@ export function MenuManager() {
                 <button type="button" onClick={() => setShowAddProduct(false)} style={{ flex: 1, background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", padding: "11px", justifyContent: "center" }}>
                   Cancel
                 </button>
-                <button id="form-save-btn" type="submit" style={{ flex: 1, background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
+                <button id="form-save-btn" type="submit" style={{ flex: 1, background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
                   {editProduct ? "Save Changes" : "Add Product"}
                 </button>
               </div>

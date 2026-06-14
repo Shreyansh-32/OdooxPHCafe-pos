@@ -211,7 +211,7 @@ export function PaymentDialog({
         name: "Café Odoo",
         description: `Order #POS`,
         order_id: rzpData.data.orderId,
-        theme: { color: "#B46B7A" },
+        theme: { color: "var(--color-primary)" },
         handler: async (response: any) => {
           // Verify with server
           const verifyRes = await fetch("/api/razorpay/verify", {
@@ -356,7 +356,7 @@ export function PaymentDialog({
                 fontWeight: "700",
                 border: `1px solid ${tab === t.key ? sv.primary : sv.border}`,
                 background:
-                  tab === t.key ? `rgba(180, 107, 122,0.15)` : "transparent",
+                  tab === t.key ? `rgba(var(--color-primary-rgb),0.15)` : "transparent",
                 color: tab === t.key ? sv.primary : sv.muted,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -501,7 +501,7 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(180, 107, 122,0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.3)",
                   transition: "all 0.2s ease",
                 }}
               >
@@ -574,7 +574,7 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(180, 107, 122,0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.3)",
                 }}
               >
                 {loading ? (

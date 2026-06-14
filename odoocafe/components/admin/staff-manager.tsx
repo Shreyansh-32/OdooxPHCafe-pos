@@ -16,7 +16,7 @@ interface StaffMember {
 type StaffRole = StaffMember["role"];
 
 const ROLE_CONFIG = {
-  ADMIN:   { icon: Shield,  color: "#B46B7A", bg: "rgba(180, 107, 122,0.15)",  label: "Admin" },
+  ADMIN:   { icon: Shield,  color: "var(--color-primary)", bg: "rgba(var(--color-primary-rgb),0.15)",  label: "Admin" },
   CASHIER: { icon: Coffee,  color: "#3b82f6", bg: "rgba(59,130,246,0.15)",  label: "Cashier" },
   KITCHEN: { icon: ChefHat, color: "#22c55e", bg: "rgba(34,197,94,0.15)",   label: "Kitchen" },
 };
@@ -149,7 +149,7 @@ export function StaffManager() {
         <button
           id="add-staff-btn"
           onClick={openAdd}
-          style={{ background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "10px 20px", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 12px rgba(180, 107, 122,0.3)" }}
+          style={{ background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "10px 20px", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 12px rgba(var(--color-primary-rgb),0.3)" }}
         >
           <Plus size={16} /> Add Staff
         </button>
@@ -284,7 +284,7 @@ export function StaffManager() {
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", padding: "11px", justifyContent: "center" }}>Cancel</button>
-                <button id="staff-save-btn" type="submit" disabled={saving} style={{ flex: 1, background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
+                <button id="staff-save-btn" type="submit" disabled={saving} style={{ flex: 1, background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
                   {saving ? "Saving..." : editMember ? "Save Changes" : "Add Member"}
                 </button>
               </div>

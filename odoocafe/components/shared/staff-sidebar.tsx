@@ -48,7 +48,7 @@ const navItems = {
 };
 
 const roleColors: Record<Role, string> = {
-  ADMIN: "#B46B7A",
+  ADMIN: "var(--color-primary)",
   CASHIER: "#3b82f6",
   KITCHEN: "#22c55e",
 };
@@ -135,9 +135,9 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
                 padding: "9px 12px",
                 borderRadius: "8px",
                 marginBottom: "2px",
-                color: isActive ? "#B46B7A" : "var(--color-text-muted)",
+                color: isActive ? "var(--color-primary)" : "var(--color-text-muted)",
                 background: isActive
-                  ? "rgba(180, 107, 122, 0.12)"
+                  ? "rgba(var(--color-primary-rgb), 0.12)"
                   : "transparent",
                 fontWeight: isActive ? "600" : "400",
                 fontSize: "14px",

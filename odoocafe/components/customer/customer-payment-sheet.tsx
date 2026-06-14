@@ -161,7 +161,7 @@ export function CustomerPaymentSheet({
         description: `Table Order #${cafeOrderNumber}`,
         order_id: rzpData.data.orderId,
         prefill: { name: customerName },
-        theme: { color: "#B46B7A" },
+        theme: { color: "var(--color-primary)" },
         handler: async (response: any) => {
           try {
             const verifyRes = await fetch("/api/razorpay/verify", {
@@ -374,7 +374,7 @@ export function CustomerPaymentSheet({
                 fontSize: "13px",
                 fontWeight: "700",
                 border: `1px solid ${tab === t.key ? sv.primary : sv.border}`,
-                background: tab === t.key ? `rgba(180, 107, 122,0.15)` : "transparent",
+                background: tab === t.key ? `rgba(var(--color-primary-rgb),0.15)` : "transparent",
                 color: tab === t.key ? sv.primary : sv.muted,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -470,8 +470,8 @@ export function CustomerPaymentSheet({
             {/* Info banner */}
             <div
               style={{
-                background: "rgba(180, 107, 122,0.08)",
-                border: "1px solid rgba(180, 107, 122,0.25)",
+                background: "rgba(var(--color-primary-rgb),0.08)",
+                border: "1px solid rgba(var(--color-primary-rgb),0.25)",
                 borderRadius: "12px",
                 padding: "14px 16px",
                 display: "flex",
@@ -497,7 +497,7 @@ export function CustomerPaymentSheet({
                 width: "100%",
                 padding: "13px",
                 borderRadius: "12px",
-                background: `rgba(180, 107, 122,0.15)`,
+                background: `rgba(var(--color-primary-rgb),0.15)`,
                 color: sv.primary,
                 fontWeight: "600",
                 fontSize: "14px",

@@ -147,7 +147,7 @@ function CollapsibleFloor({
                         ? "2px solid var(--color-primary)"
                         : "1px solid var(--color-border)",
                       background: isSelected
-                        ? "rgba(180, 107, 122, 0.1)"
+                        ? "rgba(var(--color-primary-rgb), 0.1)"
                         : "var(--color-bg-elevated)",
                       display: "flex",
                       flexDirection: "column",
@@ -666,7 +666,7 @@ export function POSTerminal() {
                         width: "42px",
                         height: "42px",
                         borderRadius: "12px",
-                        background: "rgba(180, 107, 122, 0.1)",
+                        background: "rgba(var(--color-primary-rgb), 0.1)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1184,13 +1184,13 @@ export function POSTerminal() {
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
                 style={{
-                  background: "linear-gradient(135deg, #B46B7A, #5A2D34)",
+                  background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
                   color: "#fff",
                   padding: "13px",
                   justifyContent: "center",
                   fontWeight: "700",
                   fontSize: "15px",
-                  boxShadow: "0 4px 16px rgba(180, 107, 122, 0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb), 0.3)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",

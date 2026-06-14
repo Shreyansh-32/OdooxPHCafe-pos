@@ -44,7 +44,7 @@ interface ReportData {
   paymentBreakdown: { method: string; type: string; total: number; count: number }[];
 }
 
-const PIE_COLORS = ["#B46B7A", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6"];
+const PIE_COLORS = ["var(--color-primary)", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6"];
 
 export function AdminDashboard() {
   const [data, setData] = useState<ReportData | null>(null);
@@ -195,7 +195,7 @@ export function AdminDashboard() {
             label: "Orders Today",
             value: kpis?.ordersToday ?? "—",
             icon: ShoppingBag,
-            color: "#B46B7A",
+            color: "var(--color-primary)",
             subtitle: `${kpis?.totalOrdersPeriod ?? 0} in period`,
           },
           {
@@ -290,15 +290,15 @@ export function AdminDashboard() {
         {/* Revenue Chart */}
         <div className="card">
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-            <BarChart3 size={18} color="#B46B7A" />
+            <BarChart3 size={18} color="var(--color-primary)" />
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Revenue Trend</h3>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data?.revenueChart || []}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#B46B7A" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#B46B7A" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(230, 168, 183, 0.2)" />
@@ -328,7 +328,7 @@ export function AdminDashboard() {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#B46B7A"
+                stroke="var(--color-primary)"
                 strokeWidth={2}
                 fill="url(#revenueGrad)"
               />
@@ -397,8 +397,8 @@ export function AdminDashboard() {
                       width: "26px",
                       height: "26px",
                       borderRadius: "50%",
-                      background: idx < 3 ? "rgba(180, 107, 122,0.2)" : "var(--color-bg-overlay)",
-                      color: idx < 3 ? "#B46B7A" : "var(--color-text-faint)",
+                      background: idx < 3 ? "rgba(var(--color-primary-rgb),0.2)" : "var(--color-bg-overlay)",
+                      color: idx < 3 ? "var(--color-primary)" : "var(--color-text-faint)",
                       fontSize: "12px",
                       fontWeight: "800",
                       display: "flex",
@@ -424,7 +424,7 @@ export function AdminDashboard() {
                           height: "100%",
                           width: `${pct}%`,
                           borderRadius: "999px",
-                          background: `linear-gradient(90deg, #B46B7A, #5A2D34)`,
+                          background: `linear-gradient(90deg, var(--color-primary), var(--color-primary-dark))`,
                           transition: "width 0.6s ease",
                         }}
                       />
