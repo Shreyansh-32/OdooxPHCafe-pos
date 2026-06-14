@@ -18,6 +18,8 @@ export function CustomersManager() {
   const [customers, setCustomers] = useState<CustomerRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     fetch("/api/customers")
@@ -50,6 +52,19 @@ export function CustomersManager() {
     const active = customers.filter((c) => c.orderCount > 0).length;
     return { total, active };
   }, [customers]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const paginatedCustomers = useMemo(() => {
+    return filteredCustomers.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredCustomers, currentPage]);
 
   return (
     <div style={{ padding: "28px", maxWidth: "1000px" }}>
@@ -190,7 +205,7 @@ export function CustomersManager() {
                 </td>
               </tr>
             )}
-            {filteredCustomers.map((c) => {
+            {paginatedCustomers.map((c) => {
               const hue = (c.name.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) % 360);
               const avatarBg = `hsla(${hue}, 70%, 40%, 0.15)`;
               const avatarColor = `hsl(${hue}, 70%, 65%)`;
@@ -281,6 +296,52 @@ export function CustomersManager() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px", padding: "0 10px" }}>
+          <div style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredCustomers.length)} of {filteredCustomers.length} customers
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === 1 ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === 1 ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Previous
+            </button>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 10px", fontSize: "14px", fontWeight: "600", color: "var(--color-text)" }}>
+              Page {currentPage} of {totalPages}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === totalPages ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === totalPages ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

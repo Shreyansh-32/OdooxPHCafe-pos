@@ -31,6 +31,8 @@ export function MenuManager() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const [form, setForm] = useState({
     name: "",
@@ -57,6 +59,25 @@ export function MenuManager() {
     const matchSearch = !search || p.name.toLowerCase().includes(search.toLowerCase());
     return matchCat && matchSearch && !p.isArchived;
   });
+
+  // Reset page when search or category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedCat]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  
+  // Ensure we don't end up on an invalid page if items are deleted
+  useEffect(() => {
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const openAdd = () => {
     setForm({ name: "", description: "", price: "", taxRate: "5", categoryId: categories[0]?.id || "", isAvailable: true });
@@ -205,7 +226,7 @@ export function MenuManager() {
                 </td>
               </tr>
             )}
-            {filteredProducts.map((p) => (
+            {paginatedProducts.map((p) => (
               <tr
                 key={p.id}
                 style={{ borderBottom: "1px solid var(--color-border-muted)", transition: "background 0.1s" }}
@@ -271,6 +292,52 @@ export function MenuManager() {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px", padding: "0 10px" }}>
+          <div style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredProducts.length)} of {filteredProducts.length} products
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === 1 ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === 1 ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Previous
+            </button>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 10px", fontSize: "14px", fontWeight: "600", color: "var(--color-text)" }}>
+              Page {currentPage} of {totalPages}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === totalPages ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === totalPages ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Add/Edit Modal */}
       {showAddProduct && (

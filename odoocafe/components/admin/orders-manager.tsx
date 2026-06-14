@@ -29,12 +29,14 @@ export function OrdersManager() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const { socket, isConnected } = useSocket();
 
   const fetchOrdersRef = useRef<() => void>(null as any);
 
   const fetchOrders = useCallback(() => {
-    fetch("/api/orders?limit=100")
+    fetch("/api/orders?limit=1000")
       .then((res) => res.json())
       .then((data) => {
         if (data.ok) setOrders(data.data);
@@ -78,6 +80,17 @@ export function OrdersManager() {
       o.items.some((i) => i.product.name.toLowerCase().includes(query))
     );
   });
+
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   return (
     <div style={{ padding: "28px", maxWidth: "1200px" }}>
@@ -136,7 +149,7 @@ export function OrdersManager() {
               </tr>
             </thead>
             <tbody>
-              {filteredOrders.map((order) => {
+              {paginatedOrders.map((order) => {
                 const statusStyle = STATUS_COLORS[order.status] || STATUS_COLORS.DRAFT;
                 return (
                   <tr key={order.id} style={{ borderBottom: "1px solid var(--color-border-muted)", transition: "background 0.2s" }}>
@@ -174,6 +187,52 @@ export function OrdersManager() {
           </table>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "20px", padding: "0 10px" }}>
+          <div style={{ fontSize: "14px", color: "var(--color-text-muted)" }}>
+            Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredOrders.length)} of {filteredOrders.length} orders
+          </div>
+          <div style={{ display: "flex", gap: "8px" }}>
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === 1 ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === 1 ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Previous
+            </button>
+            <div style={{ display: "flex", alignItems: "center", padding: "0 10px", fontSize: "14px", fontWeight: "600", color: "var(--color-text)" }}>
+              Page {currentPage} of {totalPages}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              style={{
+                padding: "8px 16px",
+                borderRadius: "8px",
+                border: "1px solid var(--color-border)",
+                background: currentPage === totalPages ? "transparent" : "var(--color-bg-overlay)",
+                color: currentPage === totalPages ? "var(--color-text-faint)" : "var(--color-text)",
+                cursor: currentPage === totalPages ? "not-allowed" : "pointer",
+                fontSize: "14px",
+                fontWeight: "600"
+              }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
