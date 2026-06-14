@@ -85,24 +85,29 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
           borderBottom: "1px solid var(--color-border-muted)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
-          >
-            <Image src="/CafePOS.png" alt="CafePOS Logo" width={44} height={44} style={{ objectFit: "contain" }} />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
+              }}
+            >
+              <Image src="/CafePOS.png" alt="CafePOS Logo" width={44} height={44} style={{ objectFit: "contain" }} />
+            </div>
+            <div>
+              <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--color-text)" }}>
+                Café Odoo
+              </div>
+              <div style={{ fontSize: "11px", color: "var(--color-text-faint)" }}>
+                POS System
+              </div>
+            </div>
           </div>
           <div>
-            <div style={{ fontWeight: "700", fontSize: "14px", color: "var(--color-text)" }}>
-              Café Odoo
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--color-text-faint)" }}>
-              POS System
-            </div>
+            <ThemeToggle sidebar={false} />
           </div>
         </div>
       </div>
@@ -244,10 +249,6 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
           <LogOut size={14} />
           Sign Out
         </button>
-        
-        <div style={{ marginTop: "8px", borderTop: "1px solid var(--color-border-muted)", paddingTop: "8px" }}>
-          <ThemeToggle sidebar />
-        </div>
       </div>
     </aside>
   );

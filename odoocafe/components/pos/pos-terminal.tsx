@@ -577,8 +577,8 @@ export function POSTerminal() {
               style={{
                 width: "100%",
                 maxWidth: "320px",
-                background: "linear-gradient(135deg, var(--color-espresso), var(--color-bg-elevated))",
-                border: "1px solid var(--color-primary)",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
                 borderRadius: "16px",
                 padding: "24px",
                 display: "flex",
@@ -587,7 +587,16 @@ export function POSTerminal() {
                 gap: "8px",
                 textAlign: "left",
                 cursor: "pointer",
-                boxShadow: "var(--shadow-glow)",
+                transition: "all 0.2s ease",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.border = "1px solid var(--color-primary)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.border = "1px solid var(--color-border)";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
             >
               <div
