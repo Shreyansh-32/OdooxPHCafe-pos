@@ -276,6 +276,7 @@ export function POSTerminal() {
   const [selectedFloorId, setSelectedFloorId] = useState<string | null>(null);
   const [isTableModalOpen, setIsTableModalOpen] = useState(false);
   const [selectedTableId, setSelectedTableId] = useState<string>("");
+  const [actionTableId, setActionTableId] = useState<string | null>(null);
 
   const { items, addItem, removeItem, updateQuantity, clearCart, subtotal, taxTotal, grandTotal, totalItems } = useCartStore();
   const { socket, isConnected } = useSocket();
@@ -369,6 +370,11 @@ export function POSTerminal() {
       const data = await res.json();
       if (data.ok) {
         toast.success("Table freed successfully");
+        if (selectedTableId === tableId) {
+          clearCart();
+          setSelectedTableId("");
+          setStep("TABLE_SELECTION");
+        }
         // Refresh tables
         const tblsRes = await fetch("/api/tables");
         const tblsData = await tblsRes.json();
@@ -423,6 +429,7 @@ export function POSTerminal() {
   const renderTableModal = () => {
     const activeFloor = floors.find((f) => f.id === selectedFloorId);
     const activeFloorTables = activeFloor ? tables.filter((t) => t.floorId === activeFloor.id && t.isActive) : [];
+    const actionTable = tables.find((t) => t.id === actionTableId);
 
     return (
       <AnimatePresence>
@@ -627,7 +634,14 @@ export function POSTerminal() {
                           return (
                             <button
                               key={table.id}
-                              onClick={() => changeTable(table.id)}
+                              onClick={() => {
+                                const isOccupied = hasActiveOrder || table.status === "OCCUPIED";
+                                if (isOccupied) {
+                                  setActionTableId(table.id);
+                                } else {
+                                  changeTable(table.id);
+                                }
+                              }}
                               style={{
                                 gridColumn: `${table.x + 1} / span ${table.width}`,
                                 gridRow: `${table.y + 1} / span ${table.height}`,
@@ -689,6 +703,165 @@ export function POSTerminal() {
                   </div>
                 )}
               </div>
+
+              {/* Action Popup Dialog */}
+              <AnimatePresence>
+                {actionTableId && actionTable && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundColor: "rgba(0, 0, 0, 0.6)",
+                      backdropFilter: "blur(8px)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      zIndex: 1100,
+                    }}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.95, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0.95, opacity: 0 }}
+                      transition={{ duration: 0.15, ease: "easeOut" }}
+                      style={{
+                        width: "90%",
+                        maxWidth: "400px",
+                        background: "var(--color-bg-elevated)",
+                        border: "1px solid var(--color-border)",
+                        borderRadius: "20px",
+                        padding: "24px",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "18px",
+                        boxShadow: "var(--shadow-lg), 0 20px 25px -5px rgba(0, 0, 0, 0.5)",
+                      }}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#c87941" }}>
+                          Table T-{actionTable.tableNumber} Actions
+                        </h3>
+                        <button
+                          onClick={() => setActionTableId(null)}
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "var(--color-text-muted)",
+                            cursor: "pointer",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            padding: "4px",
+                            borderRadius: "50%",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "var(--color-bg-overlay)"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          <X size={18} />
+                        </button>
+                      </div>
+
+                      <p style={{ margin: 0, fontSize: "14px", color: "var(--color-text-muted)", lineHeight: "1.5" }}>
+                        This table is currently occupied. Would you like to view/modify its menu order or free the table by marking outstanding orders as paid?
+                      </p>
+
+                      {actionTable.orders && actionTable.orders.length > 0 && (
+                        <div
+                          style={{
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            background: "rgba(200, 121, 65, 0.12)",
+                            border: "1px solid rgba(200, 121, 65, 0.25)",
+                            fontSize: "13px",
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                          }}
+                        >
+                          <span style={{ color: "var(--color-text-muted)", fontWeight: "500" }}>Active Bill:</span>
+                          <span style={{ fontWeight: "800", color: "var(--color-primary)", fontSize: "16px" }}>
+                            {formatCurrency(Number(actionTable.orders[0].grandTotal))}
+                          </span>
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "6px" }}>
+                        <button
+                          onClick={() => {
+                            changeTable(actionTable.id);
+                            setActionTableId(null);
+                          }}
+                          style={{
+                            width: "100%",
+                            padding: "12px",
+                            fontSize: "14px",
+                            fontWeight: "700",
+                            background: "linear-gradient(135deg, #c87941, #a06030)",
+                            color: "#fff",
+                            border: "none",
+                            borderRadius: "10px",
+                            cursor: "pointer",
+                            boxShadow: "0 4px 12px rgba(200, 121, 65, 0.25)",
+                          }}
+                        >
+                          Open Menu / View Order
+                        </button>
+
+                        <button
+                          onClick={async () => {
+                            if (confirm(`Are you sure you want to free Table ${actionTable.tableNumber}? This will mark all outstanding orders for this table as PAID.`)) {
+                              setActionTableId(null);
+                              await handleFreeTable(actionTable.id);
+                            }
+                          }}
+                          disabled={isFreeing}
+                          style={{
+                            width: "100%",
+                            padding: "12px",
+                            fontSize: "14px",
+                            fontWeight: "700",
+                            background: "rgba(239, 68, 68, 0.1)",
+                            color: "#ef4444",
+                            border: "1px solid rgba(239, 68, 68, 0.3)",
+                            borderRadius: "10px",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.15)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.1)";
+                          }}
+                        >
+                          {isFreeing ? "Freeing Table..." : "Free Table (Mark Paid)"}
+                        </button>
+
+                        <button
+                          onClick={() => setActionTableId(null)}
+                          style={{
+                            width: "100%",
+                            padding: "10px",
+                            fontSize: "13px",
+                            fontWeight: "600",
+                            background: "transparent",
+                            color: "var(--color-text-faint)",
+                            border: "1px solid var(--color-border-muted)",
+                            borderRadius: "10px",
+                            cursor: "pointer",
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = "var(--color-text)"}
+                          onMouseLeave={(e) => e.currentTarget.style.color = "var(--color-text-faint)"}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </motion.div>
+                  </div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </div>
         )}

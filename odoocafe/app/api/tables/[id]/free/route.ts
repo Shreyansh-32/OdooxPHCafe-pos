@@ -27,6 +27,12 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       data: { status: "PAID" }
     });
 
+    // Also update table status to AVAILABLE
+    await prisma.table.update({
+      where: { id },
+      data: { status: "AVAILABLE" }
+    });
+
     const io = getIO();
     if (io) {
       io.emit(SOCKET_EVENTS.ORDER_STATUS); // trigger refresh
