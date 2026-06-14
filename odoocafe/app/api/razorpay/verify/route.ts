@@ -62,6 +62,9 @@ export async function POST(request: Request) {
   const cafeOrder = await prisma.order.findUnique({
     where: { id: cafeOrderId },
     include: {
+      items: {
+        include: { product: { select: { name: true, taxRate: true } } },
+      },
       table: { select: { tableNumber: true } },
       customer: { select: { name: true, email: true } },
     },
@@ -107,6 +110,37 @@ export async function POST(request: Request) {
       },
     },
   });
+
+  // Send email receipt
+  const emailTo = cafeOrder.customer?.email;
+  if (emailTo) {
+    console.log(`[Verify] Customer email found: ${emailTo}. Attempting to send receipt...`);
+    try {
+      const { sendReceiptEmail } = await import("@/lib/email");
+      await sendReceiptEmail({
+        to: emailTo,
+        customerName: cafeOrder.customer?.name || "Customer",
+        orderNumber: cafeOrder.orderNumber,
+        tableNumber: cafeOrder.table?.tableNumber,
+        items: cafeOrder.items.map((item) => ({
+          name: item.product.name,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+          lineTotal: Number(item.lineTotal),
+        })),
+        subtotal: Number(cafeOrder.subtotal),
+        taxTotal: Number(cafeOrder.taxTotal),
+        discountTotal: Number(cafeOrder.discountTotal),
+        grandTotal: Number(cafeOrder.grandTotal),
+        paymentMethod: "Razorpay (Online)",
+        paidAt: new Date(),
+      });
+    } catch (emailErr) {
+      console.error("[Verify] Email receipt failed:", emailErr);
+    }
+  } else {
+    console.log(`[Verify] No email address attached to order ${cafeOrder.orderNumber}. Skipping receipt email.`);
+  }
 
   // WebSocket broadcast
   const io = getIO();
