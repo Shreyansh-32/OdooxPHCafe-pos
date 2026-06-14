@@ -72,6 +72,186 @@ interface Table {
   status: string;
 }
 
+function CollapsibleFloor({
+  floor,
+  tables,
+  isOpen,
+  onToggle,
+  onSelectTable,
+  selectedTableId,
+  handleFreeTable,
+  isFreeing,
+}: {
+  floor: Floor;
+  tables: Table[];
+  isOpen: boolean;
+  onToggle: () => void;
+  onSelectTable: (tableId: string) => void;
+  selectedTableId: string;
+  handleFreeTable: (tableId: string) => void;
+  isFreeing: boolean;
+}) {
+  return (
+    <div style={{ borderBottom: "1px solid var(--color-border)", marginBottom: "8px" }}>
+      <button
+        onClick={onToggle}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          background: "var(--color-bg-overlay)",
+          border: "none",
+          textAlign: "left",
+          borderRadius: "8px",
+          color: "var(--color-text)",
+          cursor: "pointer",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <Layers size={16} color="var(--color-primary)" />
+          <span style={{ fontWeight: "600", fontSize: "15px" }}>{floor.name}</span>
+          <span style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
+            ({tables.length} tables)
+          </span>
+        </div>
+        <div>
+          {isOpen ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
+            style={{ overflow: "hidden" }}
+          >
+            <div
+              style={{
+                padding: "16px 8px",
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))",
+                gap: "10px",
+              }}
+            >
+              {tables.map((table) => {
+                const hasActiveOrder = !!(table.orders && table.orders.length > 0);
+                const activeOrder = table.orders?.[0] || null;
+                const isSelected = selectedTableId === table.id;
+
+                return (
+                  <div
+                    key={table.id}
+                    onClick={() => onSelectTable(table.id)}
+                    style={{
+                      padding: "12px 10px",
+                      borderRadius: "8px",
+                      border: isSelected
+                        ? "2px solid var(--color-primary)"
+                        : "1px solid var(--color-border)",
+                      background: isSelected
+                        ? "rgba(200, 121, 65, 0.1)"
+                        : "var(--color-bg-elevated)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "4px",
+                      position: "relative",
+                      transition: "all 0.15s ease",
+                      textAlign: "center",
+                      cursor: "pointer",
+                      width: "100%",
+                    }}
+                  >
+                    <span style={{ fontSize: "14px", fontWeight: "700" }}>
+                      T-{table.tableNumber}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "11px",
+                        color: "var(--color-text-muted)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <Users size={10} /> {table.seats} seats
+                    </span>
+
+                    {/* Status Badge */}
+                    <span
+                      style={{
+                        marginTop: "6px",
+                        fontSize: "10px",
+                        padding: "2px 6px",
+                        borderRadius: "999px",
+                        fontWeight: "600",
+                        background: hasActiveOrder
+                          ? "rgba(245, 158, 11, 0.15)"
+                          : "rgba(34, 197, 94, 0.15)",
+                        color: hasActiveOrder ? "#f59e0b" : "#4ade80",
+                      }}
+                    >
+                      {hasActiveOrder ? "Occupied" : "Available"}
+                    </span>
+
+                    {hasActiveOrder && activeOrder && (
+                      <span style={{ fontSize: "10px", color: "var(--color-primary)", fontWeight: "600", marginTop: "2px" }}>
+                        {formatCurrency(Number(activeOrder.grandTotal))}
+                      </span>
+                    )}
+
+                    {hasActiveOrder && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isFreeing) return;
+                          handleFreeTable(table.id);
+                        }}
+                        style={{
+                          marginTop: "8px",
+                          fontSize: "10px",
+                          fontWeight: "600",
+                          padding: "4px 8px",
+                          borderRadius: "4px",
+                          background: "rgba(239, 68, 68, 0.1)",
+                          color: "#ef4444",
+                          border: "1px solid rgba(239, 68, 68, 0.3)",
+                          cursor: "pointer",
+                          width: "100%",
+                        }}
+                      >
+                        Free Table
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+              {tables.length === 0 && (
+                <div
+                  style={{
+                    gridColumn: "1 / -1",
+                    textAlign: "center",
+                    padding: "20px",
+                    color: "var(--color-text-faint)",
+                    fontSize: "13px",
+                  }}
+                >
+                  No active tables on this floor
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 export function POSTerminal() {
   const [step, setStep] = useState<"TABLE_SELECTION" | "MENU">("TABLE_SELECTION");
   const [products, setProducts] = useState<Product[]>([]);
@@ -180,11 +360,10 @@ export function POSTerminal() {
 
   const [isFreeing, setIsFreeing] = useState(false);
 
-  const handleFreeTable = async () => {
-    if (!selectedTableId) return;
+  const handleFreeTable = async (tableId: string) => {
     setIsFreeing(true);
     try {
-      const res = await fetch(`/api/tables/${selectedTableId}/free`, {
+      const res = await fetch(`/api/tables/${tableId}/free`, {
         method: "POST",
       });
       const data = await res.json();
@@ -204,6 +383,15 @@ export function POSTerminal() {
     } finally {
       setIsFreeing(false);
     }
+  };
+
+  const changeTable = (newTableId: string) => {
+    if (selectedTableId !== newTableId) {
+      clearCart();
+    }
+    setSelectedTableId(newTableId);
+    setIsTableModalOpen(false);
+    setStep("MENU");
   };
 
   const selectedTable = tables.find((t) => t.id === selectedTableId);
@@ -439,11 +627,7 @@ export function POSTerminal() {
                           return (
                             <button
                               key={table.id}
-                              onClick={() => {
-                                setSelectedTableId(table.id);
-                                setIsTableModalOpen(false);
-                                setStep("MENU");
-                              }}
+                              onClick={() => changeTable(table.id)}
                               style={{
                                 gridColumn: `${table.x + 1} / span ${table.width}`,
                                 gridRow: `${table.y + 1} / span ${table.height}`,
@@ -588,10 +772,7 @@ export function POSTerminal() {
               Quick Service
             </h3>
             <button
-              onClick={() => {
-                setSelectedTableId("");
-                setStep("MENU");
-              }}
+              onClick={() => changeTable("")}
               style={{
                 width: "100%",
                 maxWidth: "320px",
@@ -1042,35 +1223,12 @@ export function POSTerminal() {
             color: "var(--color-text-muted)",
           }}
         >
-          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-            <span>Serving Target:</span>
-            <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
-              {selectedTableId && selectedTable
-                ? `Table ${selectedTable.tableNumber}`
-                : "Takeaway / Counter"}
-            </span>
-          </div>
-          {hasActiveOrders && (
-            <button
-              onClick={handleFreeTable}
-              disabled={isFreeing}
-              style={{
-                fontSize: "11px",
-                fontWeight: "600",
-                padding: "4px 10px",
-                borderRadius: "6px",
-                background: "rgba(239, 68, 68, 0.1)",
-                color: "#ef4444",
-                border: "1px solid rgba(239, 68, 68, 0.3)",
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: "4px"
-              }}
-            >
-              {isFreeing ? "Freeing..." : "Free Table"}
-            </button>
-          )}
+          <span>Serving Target:</span>
+          <span style={{ fontWeight: "700", color: "var(--color-text)" }}>
+            {selectedTableId && selectedTable
+              ? `Table ${selectedTable.tableNumber}`
+              : "Takeaway / Counter"}
+          </span>
         </div>
 
         {/* Cart Items */}
