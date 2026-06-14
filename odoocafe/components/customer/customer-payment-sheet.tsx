@@ -51,12 +51,12 @@ export function CustomerPaymentSheet({
   const [razorpayReady, setRazorpayReady] = useState(false);
 
   const sv = {
-    bg: "#0f0f13",
-    card: "#1a1a24",
-    border: "#2a2a3a",
-    primary: "#c87941",
-    text: "#f0eee8",
-    muted: "#8a8a9a",
+    bg: "var(--color-bg)",
+    card: "var(--color-bg-elevated)",
+    border: "var(--color-border)",
+    primary: "var(--color-primary)",
+    text: "var(--color-text)",
+    muted: "var(--color-text-muted)",
   };
 
   useEffect(() => {
@@ -161,7 +161,7 @@ export function CustomerPaymentSheet({
         description: `Table Order #${cafeOrderNumber}`,
         order_id: rzpData.data.orderId,
         prefill: { name: customerName },
-        theme: { color: "#c87941" },
+        theme: { color: "#B46B7A" },
         handler: async (response: any) => {
           try {
             const verifyRes = await fetch("/api/razorpay/verify", {
@@ -374,7 +374,7 @@ export function CustomerPaymentSheet({
                 fontSize: "13px",
                 fontWeight: "700",
                 border: `1px solid ${tab === t.key ? sv.primary : sv.border}`,
-                background: tab === t.key ? `rgba(200,121,65,0.15)` : "transparent",
+                background: tab === t.key ? `rgba(180, 107, 122,0.15)` : "transparent",
                 color: tab === t.key ? sv.primary : sv.muted,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -470,8 +470,8 @@ export function CustomerPaymentSheet({
             {/* Info banner */}
             <div
               style={{
-                background: "rgba(200,121,65,0.08)",
-                border: "1px solid rgba(200,121,65,0.25)",
+                background: "rgba(180, 107, 122,0.08)",
+                border: "1px solid rgba(180, 107, 122,0.25)",
                 borderRadius: "12px",
                 padding: "14px 16px",
                 display: "flex",
@@ -497,11 +497,11 @@ export function CustomerPaymentSheet({
                 width: "100%",
                 padding: "13px",
                 borderRadius: "12px",
-                background: `rgba(200,121,65,0.15)`,
+                background: `rgba(180, 107, 122,0.15)`,
                 color: sv.primary,
                 fontWeight: "600",
                 fontSize: "14px",
-                border: `1px solid rgba(200,121,65,0.3)`,
+                border: `1px solid rgba(180, 107, 122,0.3)`,
                 cursor: "pointer",
                 display: "flex",
                 alignItems: "center",

@@ -211,7 +211,7 @@ export function PaymentDialog({
         name: "Café Odoo",
         description: `Order #POS`,
         order_id: rzpData.data.orderId,
-        theme: { color: "#c87941" },
+        theme: { color: "#B46B7A" },
         handler: async (response: any) => {
           // Verify with server
           const verifyRes = await fetch("/api/razorpay/verify", {
@@ -254,12 +254,12 @@ export function PaymentDialog({
   }
 
   const sv = {
-    bg: "#0f0f13",
-    card: "#1a1a24",
-    border: "#2a2a3a",
-    primary: "#c87941",
-    text: "#f0eee8",
-    muted: "#8a8a9a",
+    bg: "#241114",
+    card: "#3a1c22",
+    border: "rgba(230, 168, 183, 0.2)",
+    primary: "#B46B7A",
+    text: "#F6E1E6",
+    muted: "#E6A8B7",
   };
 
   const tabs: { key: PaymentTab; label: string; icon: React.ReactNode }[] = [
@@ -355,7 +355,7 @@ export function PaymentDialog({
                 fontWeight: "700",
                 border: `1px solid ${tab === t.key ? sv.primary : sv.border}`,
                 background:
-                  tab === t.key ? `rgba(200,121,65,0.15)` : "transparent",
+                  tab === t.key ? `rgba(180, 107, 122,0.15)` : "transparent",
                 color: tab === t.key ? sv.primary : sv.muted,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -490,7 +490,7 @@ export function PaymentDialog({
                   background:
                     loading || cashInsufficient
                       ? "#5a3a20"
-                      : `linear-gradient(135deg, ${sv.primary}, #a06030)`,
+                      : `linear-gradient(135deg, ${sv.primary}, #5A2D34)`,
                   color: "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
@@ -500,7 +500,7 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(200,121,65,0.3)",
+                  boxShadow: "0 4px 16px rgba(180, 107, 122,0.3)",
                 }}
               >
                 {loading ? (
@@ -562,7 +562,7 @@ export function PaymentDialog({
                   width: "100%",
                   padding: "14px",
                   borderRadius: "12px",
-                  background: loading ? "#5a3a20" : `linear-gradient(135deg, ${sv.primary}, #a06030)`,
+                  background: loading ? "#5a3a20" : `linear-gradient(135deg, ${sv.primary}, #5A2D34)`,
                   color: "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
@@ -572,7 +572,7 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(200,121,65,0.3)",
+                  boxShadow: "0 4px 16px rgba(180, 107, 122,0.3)",
                 }}
               >
                 {loading ? (

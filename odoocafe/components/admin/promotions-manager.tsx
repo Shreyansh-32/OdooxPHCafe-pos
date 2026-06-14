@@ -112,7 +112,7 @@ export function PromotionsManager() {
         <button
           id="add-promo-btn"
           onClick={openAdd}
-          style={{ background: "linear-gradient(135deg, #c87941, #a06030)", color: "#fff", padding: "10px 20px", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 12px rgba(200,121,65,0.3)" }}
+          style={{ background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "10px 20px", borderRadius: "10px", fontWeight: "600", boxShadow: "0 4px 12px rgba(180, 107, 122,0.3)" }}
         >
           <Plus size={16} /> New Promotion
         </button>
@@ -131,19 +131,19 @@ export function PromotionsManager() {
               className="card"
               style={{
                 padding: "20px",
-                border: `1px solid ${p.isActive && !isExpired ? "rgba(200,121,65,0.3)" : "var(--color-border)"}`,
+                border: `1px solid ${p.isActive && !isExpired ? "rgba(180, 107, 122,0.3)" : "var(--color-border)"}`,
                 opacity: p.isActive && !isExpired ? 1 : 0.6,
                 position: "relative",
                 overflow: "hidden",
               }}
             >
-              <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "rgba(200,121,65,0.06)" }} />
+              <div style={{ position: "absolute", top: "-20px", right: "-20px", width: "80px", height: "80px", borderRadius: "50%", background: "rgba(180, 107, 122,0.06)" }} />
 
               {/* Header */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "14px" }}>
                 <div>
                   {p.code && (
-                    <code style={{ fontSize: "16px", fontWeight: "800", color: "#c87941", background: "rgba(200,121,65,0.12)", padding: "3px 10px", borderRadius: "8px", letterSpacing: "0.08em" }}>
+                    <code style={{ fontSize: "16px", fontWeight: "800", color: "#B46B7A", background: "rgba(180, 107, 122,0.12)", padding: "3px 10px", borderRadius: "8px", letterSpacing: "0.08em" }}>
                       {p.code}
                     </code>
                   )}
@@ -158,7 +158,7 @@ export function PromotionsManager() {
               {/* Value */}
               <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "14px" }}>
                 <span style={{ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "22px", fontWeight: "800", color: "var(--color-text)" }}>
-                  {p.discountType === "PERCENTAGE" ? <Percent size={16} color="#c87941" /> : <IndianRupee size={16} color="#22c55e" />}
+                  {p.discountType === "PERCENTAGE" ? <Percent size={16} color="#B46B7A" /> : <IndianRupee size={16} color="#22c55e" />}
                   {Number(p.discountValue)}{p.discountType === "PERCENTAGE" ? "% OFF" : " OFF"}
                 </span>
                 {p.minOrderAmount && (
@@ -175,7 +175,7 @@ export function PromotionsManager() {
                     <span>Used</span><span>{p.usedCount} / {p.maxUses}</span>
                   </div>
                   <div style={{ height: "4px", borderRadius: "999px", background: "var(--color-bg-overlay)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${usagePct}%`, background: usagePct >= 90 ? "#ef4444" : "#c87941", borderRadius: "999px", transition: "width 0.4s" }} />
+                    <div style={{ height: "100%", width: `${usagePct}%`, background: usagePct >= 90 ? "#ef4444" : "#B46B7A", borderRadius: "999px", transition: "width 0.4s" }} />
                   </div>
                 </div>
               )}
@@ -261,12 +261,12 @@ export function PromotionsManager() {
                 </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <input id="promo-active" type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#c87941" }} />
+                <input id="promo-active" type="checkbox" checked={form.isActive} onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))} style={{ width: "16px", height: "16px", accentColor: "#B46B7A" }} />
                 <label style={{ margin: 0 }}>Active (visible to customers)</label>
               </div>
               <div style={{ display: "flex", gap: "10px", marginTop: "8px" }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ flex: 1, background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", padding: "11px", justifyContent: "center" }}>Cancel</button>
-                <button id="promo-save-btn" type="submit" disabled={saving} style={{ flex: 1, background: "linear-gradient(135deg, #c87941, #a06030)", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
+                <button id="promo-save-btn" type="submit" disabled={saving} style={{ flex: 1, background: "linear-gradient(135deg, #B46B7A, #5A2D34)", color: "#fff", padding: "11px", justifyContent: "center", fontWeight: "600" }}>
                   {saving ? "Saving..." : editPromo ? "Save Changes" : "Create Promotion"}
                 </button>
               </div>

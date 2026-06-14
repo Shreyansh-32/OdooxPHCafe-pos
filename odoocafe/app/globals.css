@@ -6,27 +6,27 @@
    ============================================= */
 
 :root {
-  /* Brand Colors */
-  --color-espresso: #1a0a00;
-  --color-roast: #3d1a00;
-  --color-caramel: #c87941;
-  --color-cream: #f5e6d0;
-  --color-foam: #faf5ee;
+  /* Brand Colors (Pink/Burgundy Palette) */
+  --color-espresso: #241114;
+  --color-roast: #1a0b0d;
+  --color-caramel: #B46B7A;
+  --color-cream: #F6E1E6;
+  --color-foam: #ffffff;
 
   /* Semantic */
-  --color-bg: #0f0f13;
-  --color-bg-elevated: #1a1a24;
-  --color-bg-overlay: #22222f;
-  --color-border: #2a2a3a;
-  --color-border-muted: #1e1e2a;
+  --color-bg: #241114;
+  --color-bg-elevated: #3a1c22;
+  --color-bg-overlay: rgba(90, 45, 52, 0.4);
+  --color-border: rgba(230, 168, 183, 0.2);
+  --color-border-muted: rgba(230, 168, 183, 0.1);
 
-  --color-text: #f0eee8;
-  --color-text-muted: #8a8a9a;
-  --color-text-faint: #5a5a6a;
+  --color-text: #F6E1E6;
+  --color-text-muted: #E6A8B7;
+  --color-text-faint: #B46B7A;
 
-  --color-primary: #c87941;
-  --color-primary-hover: #d98a52;
-  --color-primary-dark: #a06030;
+  --color-primary: #B46B7A;
+  --color-primary-hover: #E6A8B7;
+  --color-primary-dark: #5A2D34;
   --color-primary-text: #ffffff;
 
   --color-success: #22c55e;
@@ -50,7 +50,7 @@
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(200, 121, 65, 0.15);
+  --shadow-glow: 0 0 20px rgba(180, 107, 122, 0.25);
 
   /* Typography */
   --font-sans: var(--font-inter), -apple-system, BlinkMacSystemFont, sans-serif;
@@ -60,6 +60,33 @@
   --transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 400ms ease;
+}
+
+.light {
+  /* Brand Colors (Light Pink/Burgundy Palette) */
+  --color-espresso: #241114;
+  --color-roast: #1a0b0d;
+  --color-caramel: #5A2D34;
+  --color-cream: #F6E1E6;
+  --color-foam: #ffffff;
+
+  /* Semantic Light Values */
+  --color-bg: #F6E1E6; /* Light Pink */
+  --color-bg-elevated: #ffffff; /* White cards */
+  --color-bg-overlay: rgba(255, 255, 255, 0.6);
+  --color-border: rgba(180, 107, 122, 0.3);
+  --color-border-muted: rgba(180, 107, 122, 0.15);
+
+  --color-text: #241114; /* Deep Maroon text for contrast */
+  --color-text-muted: #5A2D34; /* Burgundy */
+  --color-text-faint: #B46B7A; /* Muted Rosewood */
+
+  --color-primary: #B46B7A;
+  --color-primary-hover: #5A2D34;
+  --color-primary-dark: #241114;
+  --color-primary-text: #ffffff;
+
+  --shadow-glow: 0 0 20px rgba(180, 107, 122, 0.15);
 }
 
 /* =============================================
@@ -153,7 +180,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(200, 121, 65, 0.15);
+  box-shadow: 0 0 0 3px rgba(180, 107, 122, 0.25);
 }
 
 input::placeholder {
@@ -196,7 +223,7 @@ button:disabled {
    ============================================= */
 
 .glass {
-  background: rgba(26, 26, 36, 0.8);
+  background: var(--color-bg-overlay);
   backdrop-filter: blur(16px);
   border: 1px solid var(--color-border);
 }
@@ -227,15 +254,15 @@ button:disabled {
   letter-spacing: 0.03em;
 }
 
-.badge-draft { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
-.badge-sent { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.badge-paid { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-.badge-cancelled { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.badge-draft { background: rgba(230, 168, 183, 0.15); color: #E6A8B7; }
+.badge-sent { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.badge-paid { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+.badge-cancelled { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 
-.badge-pending { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
-.badge-to-cook { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.badge-preparing { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
-.badge-completed { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
+.badge-pending { background: rgba(230, 168, 183, 0.15); color: #E6A8B7; }
+.badge-to-cook { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+.badge-preparing { background: rgba(59, 130, 246, 0.15); color: #60a5fa; }
+.badge-completed { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
 
 /* Animations */
 @keyframes fadeIn {

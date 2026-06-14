@@ -44,7 +44,7 @@ interface ReportData {
   paymentBreakdown: { method: string; type: string; total: number; count: number }[];
 }
 
-const PIE_COLORS = ["#c87941", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6"];
+const PIE_COLORS = ["#B46B7A", "#3b82f6", "#22c55e", "#f59e0b", "#8b5cf6"];
 
 export function AdminDashboard() {
   const [data, setData] = useState<ReportData | null>(null);
@@ -195,7 +195,7 @@ export function AdminDashboard() {
             label: "Orders Today",
             value: kpis?.ordersToday ?? "—",
             icon: ShoppingBag,
-            color: "#c87941",
+            color: "#B46B7A",
             subtitle: `${kpis?.totalOrdersPeriod ?? 0} in period`,
           },
           {
@@ -290,35 +290,35 @@ export function AdminDashboard() {
         {/* Revenue Chart */}
         <div className="card">
           <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "20px" }}>
-            <BarChart3 size={18} color="#c87941" />
+            <BarChart3 size={18} color="#B46B7A" />
             <h3 style={{ margin: 0, fontSize: "16px", fontWeight: "700" }}>Revenue Trend</h3>
           </div>
           <ResponsiveContainer width="100%" height={220}>
             <AreaChart data={data?.revenueChart || []}>
               <defs>
                 <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#c87941" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#c87941" stopOpacity={0} />
+                  <stop offset="5%" stopColor="#B46B7A" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#B46B7A" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2a2a3a" />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(230, 168, 183, 0.2)" />
               <XAxis
                 dataKey="date"
                 tickFormatter={(d) => format(parseISO(d), "MMM d")}
-                tick={{ fill: "#8a8a9a", fontSize: 11 }}
+                tick={{ fill: "#E6A8B7", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <YAxis
                 tickFormatter={(v) => `₹${(v / 1000).toFixed(0)}k`}
-                tick={{ fill: "#8a8a9a", fontSize: 11 }}
+                tick={{ fill: "#E6A8B7", fontSize: 11 }}
                 axisLine={false}
                 tickLine={false}
               />
               <Tooltip
                 contentStyle={{
-                  background: "#1a1a24",
-                  border: "1px solid #2a2a3a",
+                  background: "#3a1c22",
+                  border: "1px solid rgba(230, 168, 183, 0.2)",
                   borderRadius: "8px",
                   fontSize: "13px",
                 }}
@@ -328,7 +328,7 @@ export function AdminDashboard() {
               <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="#c87941"
+                stroke="#B46B7A"
                 strokeWidth={2}
                 fill="url(#revenueGrad)"
               />
@@ -360,15 +360,15 @@ export function AdminDashboard() {
                 </Pie>
                 <Tooltip
                   contentStyle={{
-                    background: "#1a1a24",
-                    border: "1px solid #2a2a3a",
+                    background: "#3a1c22",
+                    border: "1px solid rgba(230, 168, 183, 0.2)",
                     borderRadius: "8px",
                     fontSize: "13px",
                   }}
                   formatter={(v: any) => [formatCurrency(Number(v))]}
                 />
                 <Legend
-                  formatter={(value) => <span style={{ color: "#8a8a9a", fontSize: "12px" }}>{value}</span>}
+                  formatter={(value) => <span style={{ color: "#E6A8B7", fontSize: "12px" }}>{value}</span>}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -397,8 +397,8 @@ export function AdminDashboard() {
                       width: "26px",
                       height: "26px",
                       borderRadius: "50%",
-                      background: idx < 3 ? "rgba(200,121,65,0.2)" : "var(--color-bg-overlay)",
-                      color: idx < 3 ? "#c87941" : "var(--color-text-faint)",
+                      background: idx < 3 ? "rgba(180, 107, 122,0.2)" : "var(--color-bg-overlay)",
+                      color: idx < 3 ? "#B46B7A" : "var(--color-text-faint)",
                       fontSize: "12px",
                       fontWeight: "800",
                       display: "flex",
@@ -424,7 +424,7 @@ export function AdminDashboard() {
                           height: "100%",
                           width: `${pct}%`,
                           borderRadius: "999px",
-                          background: `linear-gradient(90deg, #c87941, #a06030)`,
+                          background: `linear-gradient(90deg, #B46B7A, #5A2D34)`,
                           transition: "width 0.6s ease",
                         }}
                       />

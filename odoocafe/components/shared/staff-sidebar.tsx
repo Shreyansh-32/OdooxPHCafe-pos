@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import type { Role } from "@prisma/client";
 import Image from "next/image";
+import { ThemeToggle } from "@/components/shared/theme-toggle";
 
 interface Props {
   userName: string;
@@ -47,7 +48,7 @@ const navItems = {
 };
 
 const roleColors: Record<Role, string> = {
-  ADMIN: "#c87941",
+  ADMIN: "#B46B7A",
   CASHIER: "#3b82f6",
   KITCHEN: "#22c55e",
 };
@@ -129,9 +130,9 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
                 padding: "9px 12px",
                 borderRadius: "8px",
                 marginBottom: "2px",
-                color: isActive ? "#c87941" : "var(--color-text-muted)",
+                color: isActive ? "#B46B7A" : "var(--color-text-muted)",
                 background: isActive
-                  ? "rgba(200, 121, 65, 0.12)"
+                  ? "rgba(180, 107, 122, 0.12)"
                   : "transparent",
                 fontWeight: isActive ? "600" : "400",
                 fontSize: "14px",
@@ -243,6 +244,10 @@ export function StaffSidebar({ userName, userRole, userEmail }: Props) {
           <LogOut size={14} />
           Sign Out
         </button>
+        
+        <div style={{ marginTop: "8px", borderTop: "1px solid var(--color-border-muted)", paddingTop: "8px" }}>
+          <ThemeToggle sidebar />
+        </div>
       </div>
     </aside>
   );
