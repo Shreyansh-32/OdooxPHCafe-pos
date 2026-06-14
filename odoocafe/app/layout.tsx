@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { SessionProvider } from "@/components/providers/session-provider";
 import { Toaster } from "react-hot-toast";
+import { ThemeProvider } from "@/components/shared/theme-provider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,12 +27,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full`}>
+    <html lang="en" className={`${inter.variable} h-full`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col antialiased">
-        <SessionProvider>
-          {children}
-          <Toaster position="top-center" />
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <SessionProvider>
+            {children}
+            <Toaster position="top-center" />
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

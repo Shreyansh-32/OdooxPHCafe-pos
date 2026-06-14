@@ -37,14 +37,14 @@ export function UpiQrDisplay({ upiId, amount, merchantName = "Café Odoo" }: Pro
 
       {/* UPI ID */}
       <div style={{ textAlign: "center" }}>
-        <div style={{ fontSize: "11px", color: "#8a8a9a", marginBottom: "4px" }}>
+        <div style={{ fontSize: "11px", color: "#E6A8B7", marginBottom: "4px" }}>
           UPI ID
         </div>
         <div
           style={{
             fontSize: "14px",
             fontWeight: "700",
-            color: "#f0eee8",
+            color: "#F6E1E6",
             letterSpacing: "0.02em",
           }}
         >
@@ -63,9 +63,9 @@ export function UpiQrDisplay({ upiId, amount, merchantName = "Café Odoo" }: Pro
           gap: "8px",
           padding: "11px 24px",
           borderRadius: "10px",
-          background: "rgba(200,121,65,0.15)",
-          border: "1px solid rgba(200,121,65,0.4)",
-          color: "#c87941",
+          background: "rgba(var(--color-primary-rgb),0.15)",
+          border: "1px solid rgba(var(--color-primary-rgb),0.4)",
+          color: "var(--color-primary)",
           fontWeight: "600",
           fontSize: "14px",
           textDecoration: "none",
@@ -80,7 +80,7 @@ export function UpiQrDisplay({ upiId, amount, merchantName = "Café Odoo" }: Pro
         style={{
           margin: 0,
           fontSize: "12px",
-          color: "#8a8a9a",
+          color: "#E6A8B7",
           textAlign: "center",
           maxWidth: "220px",
           lineHeight: "1.5",

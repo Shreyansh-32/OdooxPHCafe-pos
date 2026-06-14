@@ -154,7 +154,7 @@ function CollapsibleFloor({
                         ? "2px solid var(--color-primary)"
                         : "1px solid var(--color-border)",
                       background: isSelected
-                        ? "rgba(200, 121, 65, 0.1)"
+                        ? "rgba(var(--color-primary-rgb), 0.1)"
                         : "var(--color-bg-elevated)",
                       display: "flex",
                       flexDirection: "column",
@@ -741,7 +741,7 @@ export function POSTerminal() {
                       }}
                     >
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                        <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "#c87941" }}>
+                        <h3 style={{ margin: 0, fontSize: "18px", fontWeight: "800", color: "var(--color-primary)" }}>
                           Table T-{actionTable.tableNumber} Actions
                         </h3>
                         <button
@@ -773,8 +773,8 @@ export function POSTerminal() {
                           style={{
                             padding: "12px 16px",
                             borderRadius: "10px",
-                            background: "rgba(200, 121, 65, 0.12)",
-                            border: "1px solid rgba(200, 121, 65, 0.25)",
+                            background: "rgba(var(--color-primary-rgb), 0.12)",
+                            border: "1px solid rgba(var(--color-primary-rgb), 0.25)",
                             fontSize: "13px",
                             display: "flex",
                             justifyContent: "space-between",
@@ -799,12 +799,12 @@ export function POSTerminal() {
                             padding: "12px",
                             fontSize: "14px",
                             fontWeight: "700",
-                            background: "linear-gradient(135deg, #c87941, #a06030)",
-                            color: "#fff",
+                            background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
+                            color: "var(--color-primary-text)",
                             border: "none",
                             borderRadius: "10px",
                             cursor: "pointer",
-                            boxShadow: "0 4px 12px rgba(200, 121, 65, 0.25)",
+                            boxShadow: "0 4px 12px rgba(var(--color-primary-rgb), 0.25)",
                           }}
                         >
                           Open Menu / View Order
@@ -949,8 +949,8 @@ export function POSTerminal() {
               style={{
                 width: "100%",
                 maxWidth: "320px",
-                background: "linear-gradient(135deg, var(--color-espresso), var(--color-bg-elevated))",
-                border: "1px solid var(--color-primary)",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
                 borderRadius: "16px",
                 padding: "24px",
                 display: "flex",
@@ -959,7 +959,16 @@ export function POSTerminal() {
                 gap: "8px",
                 textAlign: "left",
                 cursor: "pointer",
-                boxShadow: "var(--shadow-glow)",
+                transition: "all 0.2s ease",
+                boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.border = "1px solid var(--color-primary)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.border = "1px solid var(--color-border)";
+                e.currentTarget.style.transform = "translateY(0)";
               }}
             >
               <div
@@ -1029,7 +1038,7 @@ export function POSTerminal() {
                         width: "42px",
                         height: "42px",
                         borderRadius: "12px",
-                        background: "rgba(200, 121, 65, 0.1)",
+                        background: "rgba(var(--color-primary-rgb), 0.1)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1547,13 +1556,13 @@ export function POSTerminal() {
                 onClick={() => setShowCheckout(true)}
                 disabled={items.length === 0}
                 style={{
-                  background: "linear-gradient(135deg, #c87941, #a06030)",
+                  background: "linear-gradient(135deg, var(--color-primary), var(--color-primary-dark))",
                   color: "#fff",
                   padding: "13px",
                   justifyContent: "center",
                   fontWeight: "700",
                   fontSize: "15px",
-                  boxShadow: "0 4px 16px rgba(200, 121, 65, 0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb), 0.3)",
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",

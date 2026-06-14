@@ -106,14 +106,14 @@ export function CustomersManager() {
       {/* Summary Stats Cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: "14px", marginBottom: "28px" }}>
         {/* Card 1: Total Customers */}
-        <div className="card" style={{ padding: "18px", border: "1px solid rgba(200, 121, 65, 0.15)" }}>
+        <div className="card" style={{ padding: "18px", border: "1px solid rgba(var(--color-primary-rgb), 0.15)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
             <div
               style={{
                 width: "36px",
                 height: "36px",
                 borderRadius: "10px",
-                background: "rgba(200, 121, 65, 0.12)",
+                background: "rgba(var(--color-primary-rgb), 0.12)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",

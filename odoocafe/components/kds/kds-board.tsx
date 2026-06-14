@@ -290,14 +290,14 @@ export function KDSBoard() {
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <ChefHat size={22} color="#c87941" />
+          <ChefHat size={22} color="var(--color-primary)" />
           <h1 style={{ margin: 0, fontSize: "20px", fontWeight: "700" }}>
             Kitchen Display
           </h1>
           <span
             style={{
-              background: "rgba(200,121,65,0.15)",
-              color: "#c87941",
+              background: "rgba(var(--color-primary-rgb),0.15)",
+              color: "var(--color-primary)",
               padding: "3px 10px",
               borderRadius: "999px",
               fontSize: "13px",
@@ -425,14 +425,14 @@ export function KDSBoard() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <span style={{ fontSize: "15px", fontWeight: "800", color: "#c87941" }}>
+                  <span style={{ fontSize: "15px", fontWeight: "800", color: "var(--color-primary)" }}>
                     #{ticket.orderNumber}
                   </span>
                   {ticket.tableNumber && (
                     <span
                       style={{
-                        background: "rgba(200,121,65,0.15)",
-                        color: "#c87941",
+                        background: "rgba(var(--color-primary-rgb),0.15)",
+                        color: "var(--color-primary)",
                         padding: "2px 8px",
                         borderRadius: "6px",
                         fontSize: "12px",

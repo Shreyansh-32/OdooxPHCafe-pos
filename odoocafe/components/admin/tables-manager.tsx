@@ -425,14 +425,14 @@ export function TablesManager() {
         <button
           onClick={() => setShowAddFloor(true)}
           style={{
-            background: "linear-gradient(135deg, #c87941, #a06030)",
+            background: "linear-gradient(135deg, var(--color-primary), #a06030)",
             color: "#fff",
             padding: "10px 20px",
             borderRadius: "10px",
             fontWeight: "600",
             border: "none",
             cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(200,121,65,0.3)",
+            boxShadow: "0 4px 12px rgba(var(--color-primary-rgb),0.3)",
             display: "flex",
             alignItems: "center",
             gap: "8px",
@@ -450,7 +450,7 @@ export function TablesManager() {
           {/* Floor selector */}
           <div style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "18px" }}>
             <h3 style={{ margin: "0 0 12px", fontSize: "15px", fontWeight: "700", display: "flex", alignItems: "center", gap: "8px" }}>
-              <Layers size={15} color="#c87941" /> Floor Plan Views
+              <Layers size={15} color="var(--color-primary)" /> Floor Plan Views
             </h3>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
               {floors.map((f) => (
@@ -462,9 +462,9 @@ export function TablesManager() {
                     borderRadius: "8px",
                     textAlign: "left",
                     fontWeight: "600",
-                    border: selectedFloorId === f.id ? "2px solid #c87941" : "1px solid var(--color-border)",
-                    background: selectedFloorId === f.id ? "rgba(200,121,65,0.1)" : "var(--color-bg-overlay)",
-                    color: selectedFloorId === f.id ? "#c87941" : "var(--color-text-muted)",
+                    border: selectedFloorId === f.id ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
+                    background: selectedFloorId === f.id ? "rgba(var(--color-primary-rgb),0.1)" : "var(--color-bg-overlay)",
+                    color: selectedFloorId === f.id ? "var(--color-primary)" : "var(--color-text-muted)",
                     cursor: "pointer",
                     transition: "all 0.2s",
                     display: "flex",
@@ -507,14 +507,14 @@ export function TablesManager() {
                   justifyContent: "space-between",
                   transition: "border-color 0.2s",
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = "#c87941"}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--color-primary)"}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--color-border)"}
               >
                 <div>
                   <div style={{ fontWeight: "700", fontSize: "13px" }}>2-Seats Square</div>
                   <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>Size: 1x1 Cell</div>
                 </div>
-                <div style={{ width: "28px", height: "28px", background: "#c87941", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>
+                <div style={{ width: "28px", height: "28px", background: "var(--color-primary)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "11px" }}>
                   2P
                 </div>
               </div>
@@ -534,14 +534,14 @@ export function TablesManager() {
                   justifyContent: "space-between",
                   transition: "border-color 0.2s",
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = "#c87941"}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--color-primary)"}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--color-border)"}
               >
                 <div>
                   <div style={{ fontWeight: "700", fontSize: "13px" }}>4-Seats Square</div>
                   <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>Size: 2x2 Cells</div>
                 </div>
-                <div style={{ width: "32px", height: "32px", background: "#c87941", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
+                <div style={{ width: "32px", height: "32px", background: "var(--color-primary)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
                   4P
                 </div>
               </div>
@@ -561,14 +561,14 @@ export function TablesManager() {
                   justifyContent: "space-between",
                   transition: "border-color 0.2s",
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.borderColor = "#c87941"}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = "var(--color-primary)"}
                 onMouseLeave={(e) => e.currentTarget.style.borderColor = "var(--color-border)"}
               >
                 <div>
                   <div style={{ fontWeight: "700", fontSize: "13px" }}>6-Seats Rectangle</div>
                   <div style={{ fontSize: "10px", color: "var(--color-text-muted)", marginTop: "2px" }}>Size: 3x2 Cells</div>
                 </div>
-                <div style={{ width: "40px", height: "28px", background: "#c87941", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
+                <div style={{ width: "40px", height: "28px", background: "var(--color-primary)", borderRadius: "6px", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: "bold", fontSize: "12px" }}>
                   6P
                 </div>
               </div>
@@ -659,7 +659,7 @@ export function TablesManager() {
                           gridRowStart: r + 1,
                           transition: "background-color 0.2s",
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(200, 121, 65, 0.04)"}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(var(--color-primary-rgb), 0.04)"}
                         onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "rgba(255, 255, 255, 0.015)"}
                       />
                     ))
@@ -730,7 +730,7 @@ export function TablesManager() {
                             width: "14px",
                             height: "14px",
                             borderRadius: "50%",
-                            background: "#c87941",
+                            background: "var(--color-primary)",
                             border: "2px solid #fff",
                             cursor: "ne-resize",
                             zIndex: 100,
@@ -744,7 +744,7 @@ export function TablesManager() {
                         </div>
 
                         {/* Label */}
-                        <span style={{ fontSize: "15px", fontWeight: "800", color: "#c87941" }}>
+                        <span style={{ fontSize: "15px", fontWeight: "800", color: "var(--color-primary)" }}>
                           {table.tableNumber}
                         </span>
 
@@ -855,7 +855,7 @@ export function TablesManager() {
 
               <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
                 <button type="button" onClick={() => setShowAddFloor(false)} style={{ flex: 1, padding: "12px", background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: "12px", background: "linear-gradient(135deg, #c87941, #a06030)", border: "none", color: "#fff", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Create Floor</button>
+                <button type="submit" style={{ flex: 1, padding: "12px", background: "linear-gradient(135deg, var(--color-primary), #a06030)", border: "none", color: "#fff", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Create Floor</button>
               </div>
             </form>
           </div>
@@ -868,7 +868,7 @@ export function TablesManager() {
           <div style={{ background: "var(--color-bg-elevated)", border: "1px solid var(--color-border)", borderRadius: "20px", padding: "28px", maxWidth: "440px", width: "100%", animation: "fadeIn 0.2s ease" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
               <div>
-                <h3 style={{ margin: "0", fontSize: "18px", fontWeight: "800", color: "#c87941" }}>Configure Table {selectedTable.tableNumber}</h3>
+                <h3 style={{ margin: "0", fontSize: "18px", fontWeight: "800", color: "var(--color-primary)" }}>Configure Table {selectedTable.tableNumber}</h3>
                 <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Size: {selectedTable.width}x{selectedTable.height} grid cells</span>
               </div>
               <button onClick={() => setSelectedTable(null)} style={{ background: "transparent", border: "none", color: "var(--color-text-muted)", cursor: "pointer" }}><X size={20} /></button>
@@ -925,9 +925,9 @@ export function TablesManager() {
                         flex: 1,
                         padding: "10px",
                         borderRadius: "8px",
-                        border: editForm.status === status ? "2px solid #c87941" : "1px solid var(--color-border)",
-                        background: editForm.status === status ? "rgba(200,121,65,0.08)" : "var(--color-bg-overlay)",
-                        color: editForm.status === status ? "#c87941" : "var(--color-text-muted)",
+                        border: editForm.status === status ? "2px solid var(--color-primary)" : "1px solid var(--color-border)",
+                        background: editForm.status === status ? "rgba(var(--color-primary-rgb),0.08)" : "var(--color-bg-overlay)",
+                        color: editForm.status === status ? "var(--color-primary)" : "var(--color-text-muted)",
                         fontWeight: "600",
                         cursor: "pointer",
                       }}
@@ -954,9 +954,9 @@ export function TablesManager() {
                   style={{
                     padding: "10px",
                     borderRadius: "8px",
-                    background: "rgba(200,121,65,0.12)",
-                    border: "1px solid rgba(200,121,65,0.3)",
-                    color: "#c87941",
+                    background: "rgba(var(--color-primary-rgb),0.12)",
+                    border: "1px solid rgba(var(--color-primary-rgb),0.3)",
+                    color: "var(--color-primary)",
                     fontSize: "13px",
                     fontWeight: "600",
                     cursor: "pointer",
@@ -991,7 +991,7 @@ export function TablesManager() {
                   <Trash2 size={15} /> Remove
                 </button>
                 <button type="button" onClick={() => setSelectedTable(null)} style={{ flex: 1, padding: "12px", background: "var(--color-bg-overlay)", border: "1px solid var(--color-border)", color: "var(--color-text-muted)", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Cancel</button>
-                <button type="submit" style={{ flex: 1, padding: "12px", background: "linear-gradient(135deg, #c87941, #a06030)", border: "none", color: "#fff", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Save</button>
+                <button type="submit" style={{ flex: 1, padding: "12px", background: "linear-gradient(135deg, var(--color-primary), #a06030)", border: "none", color: "#fff", borderRadius: "8px", cursor: "pointer", fontWeight: "600" }}>Save</button>
               </div>
             </form>
           </div>
@@ -1019,7 +1019,7 @@ export function TablesManager() {
                   flex: 1,
                   padding: "11px",
                   borderRadius: "10px",
-                  background: "linear-gradient(135deg, #c87941, #a06030)",
+                  background: "linear-gradient(135deg, var(--color-primary), #a06030)",
                   color: "#fff",
                   fontSize: "14px",
                   fontWeight: "600",

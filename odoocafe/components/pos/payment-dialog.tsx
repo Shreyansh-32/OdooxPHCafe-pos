@@ -211,7 +211,7 @@ export function PaymentDialog({
         name: "Café Odoo",
         description: `Order #POS`,
         order_id: rzpData.data.orderId,
-        theme: { color: "#c87941" },
+        theme: { color: "var(--color-primary)" },
         handler: async (response: any) => {
           // Verify with server
           const verifyRes = await fetch("/api/razorpay/verify", {
@@ -254,12 +254,12 @@ export function PaymentDialog({
   }
 
   const sv = {
-    bg: "#0f0f13",
-    card: "#1a1a24",
-    border: "#2a2a3a",
-    primary: "#c87941",
-    text: "#f0eee8",
-    muted: "#8a8a9a",
+    bg: "var(--color-bg)",
+    card: "var(--color-bg-elevated)",
+    border: "var(--color-border)",
+    primary: "var(--color-primary)",
+    text: "var(--color-text)",
+    muted: "var(--color-text-muted)",
   };
 
   const tabs: { key: PaymentTab; label: string; icon: React.ReactNode }[] = [
@@ -273,7 +273,8 @@ export function PaymentDialog({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.85)",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(4px)",
         zIndex: 150,
         display: "flex",
         alignItems: "center",
@@ -355,7 +356,7 @@ export function PaymentDialog({
                 fontWeight: "700",
                 border: `1px solid ${tab === t.key ? sv.primary : sv.border}`,
                 background:
-                  tab === t.key ? `rgba(200,121,65,0.15)` : "transparent",
+                  tab === t.key ? `rgba(var(--color-primary-rgb),0.15)` : "transparent",
                 color: tab === t.key ? sv.primary : sv.muted,
                 cursor: "pointer",
                 transition: "all 0.15s",
@@ -489,9 +490,9 @@ export function PaymentDialog({
                   borderRadius: "12px",
                   background:
                     loading || cashInsufficient
-                      ? "#5a3a20"
-                      : `linear-gradient(135deg, ${sv.primary}, #a06030)`,
-                  color: "#fff",
+                      ? "var(--color-bg-overlay)"
+                      : "var(--color-primary)",
+                  color: loading || cashInsufficient ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",
@@ -500,7 +501,8 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(200,121,65,0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.3)",
+                  transition: "all 0.2s ease",
                 }}
               >
                 {loading ? (
@@ -562,8 +564,8 @@ export function PaymentDialog({
                   width: "100%",
                   padding: "14px",
                   borderRadius: "12px",
-                  background: loading ? "#5a3a20" : `linear-gradient(135deg, ${sv.primary}, #a06030)`,
-                  color: "#fff",
+                  background: loading ? "var(--color-bg-overlay)" : "var(--color-primary)",
+                  color: loading ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",
@@ -572,7 +574,7 @@ export function PaymentDialog({
                   alignItems: "center",
                   justifyContent: "center",
                   gap: "8px",
-                  boxShadow: "0 4px 16px rgba(200,121,65,0.3)",
+                  boxShadow: "0 4px 16px rgba(var(--color-primary-rgb),0.3)",
                 }}
               >
                 {loading ? (
@@ -624,9 +626,9 @@ export function PaymentDialog({
                   padding: "14px",
                   borderRadius: "12px",
                   background: loading
-                    ? "#5a3a20"
+                    ? "var(--color-bg-overlay)"
                     : "linear-gradient(135deg, #072654, #1a3c7e)",
-                  color: "#fff",
+                  color: loading ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",

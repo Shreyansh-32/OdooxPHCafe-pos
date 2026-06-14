@@ -44,10 +44,10 @@ export function CustomerOrderGate({ tableId, tableToken, tableNumber, floorName 
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "#0f0f13",
+          background: "#241114",
         }}
       >
-        <div style={{ textAlign: "center", color: "#8a8a9a", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        <div style={{ textAlign: "center", color: "#E6A8B7", display: "flex", flexDirection: "column", alignItems: "center" }}>
           <div style={{ marginBottom: "12px" }}>
             <Image src="/CafePOS.png" alt="CafePOS Logo" width={80} height={80} style={{ objectFit: "contain" }} />
           </div>
