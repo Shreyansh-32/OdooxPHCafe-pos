@@ -254,12 +254,12 @@ export function PaymentDialog({
   }
 
   const sv = {
-    bg: "#241114",
-    card: "#3a1c22",
-    border: "rgba(230, 168, 183, 0.2)",
-    primary: "#B46B7A",
-    text: "#F6E1E6",
-    muted: "#E6A8B7",
+    bg: "var(--color-bg)",
+    card: "var(--color-bg-elevated)",
+    border: "var(--color-border)",
+    primary: "var(--color-primary)",
+    text: "var(--color-text)",
+    muted: "var(--color-text-muted)",
   };
 
   const tabs: { key: PaymentTab; label: string; icon: React.ReactNode }[] = [
@@ -273,7 +273,8 @@ export function PaymentDialog({
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.85)",
+        background: "rgba(0,0,0,0.5)",
+        backdropFilter: "blur(4px)",
         zIndex: 150,
         display: "flex",
         alignItems: "center",
@@ -489,9 +490,9 @@ export function PaymentDialog({
                   borderRadius: "12px",
                   background:
                     loading || cashInsufficient
-                      ? "#5a3a20"
-                      : `linear-gradient(135deg, ${sv.primary}, #5A2D34)`,
-                  color: "#fff",
+                      ? "var(--color-bg-overlay)"
+                      : "var(--color-primary)",
+                  color: loading || cashInsufficient ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",
@@ -501,6 +502,7 @@ export function PaymentDialog({
                   justifyContent: "center",
                   gap: "8px",
                   boxShadow: "0 4px 16px rgba(180, 107, 122,0.3)",
+                  transition: "all 0.2s ease",
                 }}
               >
                 {loading ? (
@@ -562,8 +564,8 @@ export function PaymentDialog({
                   width: "100%",
                   padding: "14px",
                   borderRadius: "12px",
-                  background: loading ? "#5a3a20" : `linear-gradient(135deg, ${sv.primary}, #5A2D34)`,
-                  color: "#fff",
+                  background: loading ? "var(--color-bg-overlay)" : "var(--color-primary)",
+                  color: loading ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",
@@ -624,9 +626,9 @@ export function PaymentDialog({
                   padding: "14px",
                   borderRadius: "12px",
                   background: loading
-                    ? "#5a3a20"
+                    ? "var(--color-bg-overlay)"
                     : "linear-gradient(135deg, #072654, #1a3c7e)",
-                  color: "#fff",
+                  color: loading ? "var(--color-text-muted)" : "#fff",
                   fontWeight: "700",
                   fontSize: "15px",
                   border: "none",
