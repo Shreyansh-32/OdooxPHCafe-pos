@@ -7,6 +7,10 @@ services:
     buildCommand: "pnpm install && npx prisma generate && npx prisma db push && pnpm run build"
     startCommand: "pnpm run start"
     envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: PNPM_VERSION
+        value: "9"
       - key: NODE_ENV
         value: production
       - key: PORT
