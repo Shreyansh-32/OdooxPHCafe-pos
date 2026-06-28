@@ -37,6 +37,18 @@ async function main() {
     // 2. RETRIEVE OR CREATE STAFF USERS & SYSTEM CONFIGS
     console.log("👥 Setting up system users and payment methods...");
     const adminPassword = await bcrypt.hash("admin123", 10);
+    
+    const adminUser = await prisma.user.upsert({
+        where: { email: "admin@cafeodoo.com" },
+        update: {},
+        create: {
+            name: "Admin User",
+            email: "admin@cafeodoo.com",
+            password: adminPassword,
+            role: "ADMIN",
+        },
+    });
+
     const cashierUser = await prisma.user.upsert({
         where: { email: "cashier@cafeodoo.com" },
         update: {},

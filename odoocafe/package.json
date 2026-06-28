@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "db:seed-large": "tsx prisma/seed.ts",
+    "dev": "tsx server.ts",
     "build": "next build",
     "start": "tsx server.ts",
     "lint": "eslint",
